@@ -1,0 +1,30 @@
+# ── Python ────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# ── Environment / Secrets ────────────────────────────────────
+.env
+credentials/
+
+# ── Runtime output (don't ship to container) ─────────────────
+logs/
+*/output/
+*.log
+
+# ── IDE / OS ─────────────────────────────────────────────────
+.vscode/
+.idea/
+.claude/
+.gemini/
+.agent/
+*.swp
+Thumbs.db
+.DS_Store
+
+# ── Git ──────────────────────────────────────────────────────
+.git/
+.gitignore

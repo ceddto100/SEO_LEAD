@@ -1,0 +1,189 @@
+================================================================================
+WORKFLOW 02: CONTENT STRATEGY & BLOG PLANNING
+================================================================================
+
+WORKFLOW NAME: AI Content Calendar & Editorial Planning Engine
+
+TRIGGER (Make.com Module):
+- Watch Rows (Google Sheets): Triggers when new keywords land in "ContentQueue" sheet
+  (fed from Workflow 01)
+- Schedule: Every Monday at 8:00 AM for weekly planning
+
+--------------------------------------------------------------------------------
+AI AGENT ROLE:
+--------------------------------------------------------------------------------
+The AI agent acts as a Content Strategist / Editorial Director. It:
+- Takes prioritized keywords and builds a content calendar
+- Determines the best content type for each keyword (blog, listicle, guide, etc.)
+- Creates detailed blog outlines with SEO structure
+- Assigns publishing dates based on a cadence (e.g., 3 posts/week)
+- Ensures topical cluster coverage (pillar + supporting content)
+
+--------------------------------------------------------------------------------
+STEP-BY-STEP AUTOMATION LOGIC:
+--------------------------------------------------------------------------------
+
+STEP 1: TRIGGER ON NEW KEYWORD QUEUE ENTRIES
+  Module: Google Sheets > Watch Rows
+  Sheet: "ContentQueue"
+  Trigger Column: Status = "new"
+  Pulls: keyword, volume, intent, opportunity_score
+
+STEP 2: BATCH KEYWORDS FOR PLANNING
+  Module: Array Aggregator
+  Action: Collect all new keyword rows into a single array
+  Output: Array of keyword objects
+
+STEP 3: AI CONTENT STRATEGY GENERATION
+  Module: OpenAI > Create Chat Completion
+  Model: gpt-4o
+  Prompt Template:
+  """
+  You are a content strategist for a digital business blog.
+
+  Here are the prioritized keywords to plan content for:
+  {{step2_keyword_array}}
+
+  For each keyword, determine:
+  1. Content Type: blog post / ultimate guide / listicle / comparison / case study / how-to tutorial
+  2. Target Word Count: based on SERP competition (thin = 1200, medium = 2000, competitive = 3000+)
+  3. Title: SEO-optimized, click-worthy title (include primary keyword)
+  4. Meta Description: 155 chars max, include keyword, compelling CTA
+  5. Pillar or Cluster: Is this a pillar page or a supporting cluster article?
+  6. Internal Link Targets: Which other planned articles should this link to?
+  7. Publishing Priority: 1 (urgent) to 5 (can wait)
+
+  Also create a TOPICAL CLUSTER MAP showing which pillar articles connect to which
+  supporting articles.
+
+  Return as JSON:
+  {
+    "content_plan": [
+      {
+        "keyword": "...",
+        "content_type": "ultimate guide",
+        "word_count": 3000,
+        "title": "...",
+        "meta_description": "...",
+        "pillar_or_cluster": "pillar",
+        "internal_links": ["article-slug-1", "article-slug-2"],
+        "priority": 1
+      }
+    ],
+    "cluster_map": {
+      "pillar_topic": ["supporting_1", "supporting_2"]
+    }
+  }
+  """
+
+STEP 4: AI BLOG OUTLINE GENERATION
+  Module: OpenAI > Create Chat Completion (Iterator - runs per content item)
+  Prompt Template:
+  """
+  Create a detailed blog outline for:
+
+  Title: {{content_plan_item.title}}
+  Keyword: {{content_plan_item.keyword}}
+  Content Type: {{content_plan_item.content_type}}
+  Word Count Target: {{content_plan_item.word_count}}
+
+  Requirements:
+  - H1: The title
+  - H2s: 5-8 main sections
+  - H3s: 2-3 subsections under each H2
+  - Include "Key Takeaways" section
+  - Include FAQ section with 5 questions (for featured snippets)
+  - Specify where to place internal links
+  - Specify where to place CTAs (lead magnets, email signup)
+  - Note any statistics/data points to include
+
+  Return as JSON:
+  {
+    "title": "...",
+    "slug": "...",
+    "outline": [
+      {
+        "h2": "Section Title",
+        "h3s": ["Sub 1", "Sub 2"],
+        "notes": "Include stat about X",
+        "cta_placement": true
+      }
+    ],
+    "faq": [
+      {"question": "...", "answer_brief": "..."}
+    ]
+  }
+  """
+
+STEP 5: ASSIGN PUBLISHING DATES
+  Module: Tools > Set Variable
+  Action: Calculate dates based on publishing cadence
+  Logic:
+    - 3 posts per week (Mon, Wed, Fri)
+    - Priority 1 articles get earliest slots
+    - Space pillar content at least 1 week apart
+  Formula: start_date + (index * 2.33 days), rounded to next Mon/Wed/Fri
+
+STEP 6: SAVE CONTENT CALENDAR TO GOOGLE SHEET
+  Module: Google Sheets > Add Row (Iterator)
+  Sheet: "ContentCalendar"
+  Columns:
+    | Title | Keyword | Type | Word Count | Publish Date | Status | Outline Link | Priority |
+
+STEP 7: SAVE OUTLINES TO GOOGLE DOCS
+  Module: Google Docs > Create a Document
+  Action: Create one Google Doc per outline
+  Title: "OUTLINE - {{title}}"
+  Content: Formatted outline from Step 4
+  Folder: Shared Google Drive "Blog Outlines" folder
+
+STEP 8: UPDATE CONTENT QUEUE STATUS
+  Module: Google Sheets > Update Row
+  Sheet: "ContentQueue"
+  Action: Set Status = "planned" for all processed keywords
+
+STEP 9: NOTIFY
+  Module: Email > Send
+  Action: Weekly content plan summary
+  Subject: "Content Plan Ready: {{count}} articles scheduled"
+  Body: Summary table of titles, dates, word counts
+
+--------------------------------------------------------------------------------
+INPUTS & OUTPUTS:
+--------------------------------------------------------------------------------
+
+INPUTS:
+  - Keyword queue from Workflow 01 (Google Sheet rows)
+  - Publishing cadence setting (e.g., 3x/week)
+  - Business niche context
+
+OUTPUTS:
+  - Content calendar (Google Sheet with titles, dates, statuses)
+  - Blog outlines (Google Docs, one per article)
+  - Topical cluster map (JSON stored in sheet)
+  - Notification email with weekly plan summary
+
+DATA STRUCTURE (ContentCalendar Sheet):
+  | Title                          | Keyword            | Type       | Words | Pub Date   | Status  | Priority |
+  |--------------------------------|--------------------|------------|-------|------------|---------|----------|
+  | Ultimate Guide to Lead Gen     | lead generation    | guide      | 3000  | 2026-02-14 | planned | 1        |
+  | 10 Best CRM Tools for 2026     | best crm tools     | listicle   | 2000  | 2026-02-17 | planned | 2        |
+
+--------------------------------------------------------------------------------
+TOOLS / APIs INVOLVED:
+--------------------------------------------------------------------------------
+  - Make.com (orchestration, scheduling, iteration)
+  - Google Sheets (content queue input, calendar output)
+  - Google Docs (outline storage)
+  - OpenAI API / GPT-4o (strategy, outlines)
+  - Gmail (notifications)
+
+--------------------------------------------------------------------------------
+OPTIMIZATION OPPORTUNITIES:
+--------------------------------------------------------------------------------
+  1. Add SERP analysis before outline creation (check what top 3 articles cover)
+  2. Auto-detect content cannibalization (two articles targeting same keyword)
+  3. Seasonal content scheduling (holiday, event-based adjustments)
+  4. Track outline-to-publish conversion rate
+  5. Add content scoring: estimate traffic potential per article
+  6. Feed completed outlines directly to Workflow 03 (AI Blog Writing)

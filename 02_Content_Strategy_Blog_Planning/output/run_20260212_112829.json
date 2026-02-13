@@ -1,0 +1,162 @@
+{
+  "summary": {
+    "niche": "digital marketing",
+    "total_articles": 5,
+    "outlines_generated": 5,
+    "calendar_entries": 5,
+    "cluster_pillars": 1,
+    "sheets_written": {
+      "ContentCalendar": 5,
+      "BlogOutlines": 5,
+      "ClusterMap": 1,
+      "QueueUpdated": 5
+    },
+    "elapsed_seconds": 0.0,
+    "timestamp": "2026-02-12T11:28:29.758166"
+  },
+  "strategy": {
+    "content_plan": [
+      {
+        "keyword": "lead generation strategies",
+        "content_type": "ultimate guide",
+        "word_count": 3000,
+        "title": "The Complete Guide to Lead Generation Strategies",
+        "meta_description": "Learn everything about lead generation strategies with our actionable guide. Get started today.",
+        "pillar_or_cluster": "pillar",
+        "internal_links": [],
+        "priority": 1
+      },
+      {
+        "keyword": "best crm software 2026",
+        "content_type": "blog post",
+        "word_count": 2000,
+        "title": "How to Master Best Crm Software 2026 in 2026",
+        "meta_description": "Learn everything about best crm software 2026 with our actionable guide. Get started today.",
+        "pillar_or_cluster": "cluster",
+        "internal_links": [
+          "lead-generation-strategies"
+        ],
+        "priority": 2
+      },
+      {
+        "keyword": "email marketing automation",
+        "content_type": "blog post",
+        "word_count": 2000,
+        "title": "How to Master Email Marketing Automation in 2026",
+        "meta_description": "Learn everything about email marketing automation with our actionable guide. Get started today.",
+        "pillar_or_cluster": "cluster",
+        "internal_links": [
+          "lead-generation-strategies"
+        ],
+        "priority": 3
+      },
+      {
+        "keyword": "how to generate leads online",
+        "content_type": "blog post",
+        "word_count": 2000,
+        "title": "How to Master How To Generate Leads Online in 2026",
+        "meta_description": "Learn everything about how to generate leads online with our actionable guide. Get started today.",
+        "pillar_or_cluster": "cluster",
+        "internal_links": [
+          "lead-generation-strategies"
+        ],
+        "priority": 4
+      },
+      {
+        "keyword": "b2b lead generation tools",
+        "content_type": "blog post",
+        "word_count": 2000,
+        "title": "How to Master B2B Lead Generation Tools in 2026",
+        "meta_description": "Learn everything about b2b lead generation tools with our actionable guide. Get started today.",
+        "pillar_or_cluster": "cluster",
+        "internal_links": [
+          "lead-generation-strategies"
+        ],
+        "priority": 5
+      }
+    ],
+    "cluster_map": {
+      "lead generation strategies": [
+        "best crm software 2026",
+        "email marketing automation",
+        "how to generate leads online",
+        "b2b lead generation tools"
+      ]
+    }
+  },
+  "calendar": [
+    {
+      "Title": "The Complete Guide to Lead Generation Strategies",
+      "Keyword": "lead generation strategies",
+      "Type": "ultimate guide",
+      "Word Count": 3000,
+      "Publish Date": "2026-02-13",
+      "Status": "planned",
+      "Priority": 1,
+      "Pillar/Cluster": "pillar",
+      "Slug": "lead-generation-strategies",
+      "Meta Description": "Learn everything about lead generation strategies with our actionable guide. Get started today.",
+      "Internal Links": ""
+    },
+    {
+      "Title": "How to Master Best Crm Software 2026 in 2026",
+      "Keyword": "best crm software 2026",
+      "Type": "blog post",
+      "Word Count": 2000,
+      "Publish Date": "2026-02-16",
+      "Status": "planned",
+      "Priority": 2,
+      "Pillar/Cluster": "cluster",
+      "Slug": "best-crm-software-2026",
+      "Meta Description": "Learn everything about best crm software 2026 with our actionable guide. Get started today.",
+      "Internal Links": "lead-generation-strategies"
+    },
+    {
+      "Title": "How to Master Email Marketing Automation in 2026",
+      "Keyword": "email marketing automation",
+      "Type": "blog post",
+      "Word Count": 2000,
+      "Publish Date": "2026-02-18",
+      "Status": "planned",
+      "Priority": 3,
+      "Pillar/Cluster": "cluster",
+      "Slug": "email-marketing-automation",
+      "Meta Description": "Learn everything about email marketing automation with our actionable guide. Get started today.",
+      "Internal Links": "lead-generation-strategies"
+    },
+    {
+      "Title": "How to Master How To Generate Leads Online in 2026",
+      "Keyword": "how to generate leads online",
+      "Type": "blog post",
+      "Word Count": 2000,
+      "Publish Date": "2026-02-20",
+      "Status": "planned",
+      "Priority": 4,
+      "Pillar/Cluster": "cluster",
+      "Slug": "how-to-generate-leads-online",
+      "Meta Description": "Learn everything about how to generate leads online with our actionable guide. Get started today.",
+      "Internal Links": "lead-generation-strategies"
+    },
+    {
+      "Title": "How to Master B2B Lead Generation Tools in 2026",
+      "Keyword": "b2b lead generation tools",
+      "Type": "blog post",
+      "Word Count": 2000,
+      "Publish Date": "2026-02-23",
+      "Status": "planned",
+      "Priority": 5,
+      "Pillar/Cluster": "cluster",
+      "Slug": "b2b-lead-generation-tools",
+      "Meta Description": "Learn everything about b2b lead generation tools with our actionable guide. Get started today.",
+      "Internal Links": "lead-generation-strategies"
+    }
+  ],
+  "outlines_count": 5,
+  "outline_titles": [
+    "The Complete Guide to Lead Generation Strategies",
+    "How to Master Best Crm Software 2026 in 2026",
+    "How to Master Email Marketing Automation in 2026",
+    "How to Master How To Generate Leads Online in 2026",
+    "How to Master B2B Lead Generation Tools in 2026"
+  ]
+}

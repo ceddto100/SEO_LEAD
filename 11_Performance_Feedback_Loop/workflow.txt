@@ -1,0 +1,252 @@
+================================================================================
+WORKFLOW 11: PERFORMANCE FEEDBACK LOOP
+(AI Improves Content Based on Results)
+================================================================================
+
+WORKFLOW NAME: AI Self-Optimization & Content Improvement Engine
+
+TRIGGER (Make.com Module):
+- Webhooks > Custom Webhook: Receives weekly performance data from Workflow 10
+- Schedule: Every Monday at 7 AM (analyze last week's data + optimize)
+
+--------------------------------------------------------------------------------
+AI AGENT ROLE:
+--------------------------------------------------------------------------------
+The AI agent acts as a Growth Optimization Strategist. It:
+- Analyzes which content is performing well and why
+- Identifies underperforming content and recommends fixes
+- Automatically triggers content refreshes for stale/declining pages
+- Adjusts keyword strategy based on actual ranking data
+- Feeds optimization signals back into Workflows 01-09 to improve future output
+
+--------------------------------------------------------------------------------
+STEP-BY-STEP AUTOMATION LOGIC:
+--------------------------------------------------------------------------------
+
+STEP 1: RECEIVE PERFORMANCE DATA
+  Module: Webhooks > Custom Webhook
+  Payload from Workflow 10:
+  {
+    "period": "2026-02-05 to 2026-02-12",
+    "top_pages": [
+      {"url": "/blog/lead-gen-guide", "sessions": 450, "leads": 12, "conv_rate": "2.7%"}
+    ],
+    "underperforming": [
+      {"url": "/blog/seo-tips", "sessions": 23, "expected": 200, "position": 34}
+    ],
+    "keyword_opportunities": [
+      {"keyword": "crm comparison", "position": 11, "impressions": 5000, "clicks": 80}
+    ],
+    "declining_pages": [
+      {"url": "/blog/email-tools", "prev_sessions": 300, "curr_sessions": 150, "change": "-50%"}
+    ]
+  }
+
+STEP 2: AI PERFORMANCE ANALYSIS
+  Module: OpenAI > Create Chat Completion
+  Model: gpt-4o
+  Prompt Template:
+  """
+  You are a content performance optimizer. Analyze this week's data and
+  create an optimization action plan.
+
+  PERFORMANCE DATA:
+  {{step1_payload}}
+
+  HISTORICAL CONTEXT:
+  {{last_4_weeks_trend_data}}
+
+  ANALYSIS TASKS:
+  1. TOP PERFORMERS - Why are they working?
+     - Identify patterns: topic, format, word count, keyword intent
+     - Recommend: create more content like this
+
+  2. UNDERPERFORMERS - Why are they failing?
+     - Likely issues: wrong keyword intent, thin content, poor on-page SEO, high competition
+     - Recommend specific fixes for each
+
+  3. ALMOST-THERE OPPORTUNITIES
+     - Pages ranking positions 8-20 that could reach page 1 with improvements
+     - Specific optimization actions per page
+
+  4. CONTENT REFRESH CANDIDATES
+     - Pages with declining traffic (>20% drop over 2+ weeks)
+     - Recommend: update content, add sections, refresh data
+
+  5. KEYWORD STRATEGY ADJUSTMENTS
+     - New keywords to target based on Search Console data
+     - Keywords to de-prioritize (too competitive, low conversion)
+     - Long-tail opportunities from existing rankings
+
+  Return JSON:
+  {
+    "top_performer_insights": {
+      "patterns": ["listicles perform 2x better", "transactional intent converts higher"],
+      "replicate_actions": ["Create 3 more comparison posts", "Add more case studies"]
+    },
+    "underperformer_fixes": [
+      {
+        "url": "/blog/seo-tips",
+        "issues": ["thin content (800 words)", "no internal links", "missing FAQ"],
+        "actions": ["Expand to 2500 words", "Add 5 internal links", "Add FAQ schema"],
+        "priority": "high"
+      }
+    ],
+    "almost_there": [
+      {
+        "url": "/blog/crm-guide",
+        "keyword": "crm comparison",
+        "current_position": 11,
+        "actions": ["Add comparison table", "Get 2 backlinks", "Update title tag"],
+        "estimated_impact": "Could reach position 5-7"
+      }
+    ],
+    "refresh_candidates": [
+      {
+        "url": "/blog/email-tools",
+        "decline": "-50%",
+        "actions": ["Update tool list for 2026", "Add pricing section", "Refresh screenshots"]
+      }
+    ],
+    "keyword_adjustments": {
+      "new_targets": ["keyword1", "keyword2"],
+      "deprioritize": ["keyword3"],
+      "long_tail": ["long tail keyword 1"]
+    }
+  }
+  """
+
+STEP 3: AUTO-TRIGGER CONTENT REFRESH
+  Module: Router (for each refresh_candidate)
+  Condition: priority = "high" AND decline > 30%
+
+  Action A: Add to ContentCalendar as "refresh" type
+  Module: Google Sheets > Add Row
+  Sheet: "ContentCalendar"
+  Data:
+  | Title (REFRESH) | Original URL | Keyword | Type: refresh | Status: planned | Priority: 1 |
+
+  Action B: Generate refresh instructions for Workflow 03
+  Module: OpenAI > Create Chat Completion
+  Prompt:
+  """
+  Generate specific content refresh instructions for:
+  URL: {{url}}
+  Current issues: {{issues}}
+  Actions needed: {{actions}}
+
+  Create a detailed brief that Workflow 03 (AI Writer) can use to update this article.
+  Include: sections to add, sections to update, new data to include, internal links to add.
+
+  Return as a structured brief in JSON.
+  """
+
+  Module: Google Docs > Create Document
+  Title: "REFRESH BRIEF - {{article_title}}"
+  Content: Structured refresh instructions
+
+STEP 4: FEED NEW KEYWORDS BACK TO WORKFLOW 01
+  Module: Google Sheets > Add Row (Iterator)
+  Sheet: "ContentQueue" (Workflow 01's output / Workflow 02's input)
+  Data: New keyword targets from optimization analysis
+  Status: "new"
+  Source: "feedback-loop"
+
+STEP 5: UPDATE CONTENT STRATEGY RULES
+  Module: Google Sheets > Update Row
+  Sheet: "StrategyConfig"
+  Updates based on AI insights:
+    - Preferred content types (update weights based on performance)
+    - Target word counts (adjust based on what's ranking)
+    - CTA placement patterns (what converts best)
+    - Topic categories to prioritize
+
+  Example StrategyConfig row:
+  | Config Key          | Value            | Updated    | Source           |
+  |---------------------|------------------|------------|------------------|
+  | preferred_format    | listicle         | 2026-02-12 | feedback-loop    |
+  | avg_target_words    | 2200             | 2026-02-12 | feedback-loop    |
+  | top_converting_cta  | free-checklist   | 2026-02-12 | feedback-loop    |
+
+STEP 6: OPTIMIZE FUTURE AI PROMPTS
+  Module: Google Sheets > Update Row
+  Sheet: "PromptConfig"
+  Action: Store learned patterns that should influence future content generation
+
+  Example: If data shows "articles with FAQ sections rank 3 positions higher,"
+  update the writing prompt config to always require FAQ sections.
+
+  | Prompt Rule              | Value                                  | Evidence                    |
+  |--------------------------|----------------------------------------|-----------------------------|
+  | require_faq              | true                                   | +3 avg position with FAQ    |
+  | min_word_count           | 2000                                   | <1500 word articles rank 20+|
+  | include_comparison_table | if content_type = comparison           | 2x CTR with tables          |
+  | cta_placement            | after_section_2 + end                  | 35% higher conversion       |
+
+STEP 7: GENERATE OPTIMIZATION REPORT
+  Module: OpenAI > Create Chat Completion
+  Prompt: Create a summary of all optimization actions taken this week
+  Output: Human-readable report
+
+  Module: Email > Send
+  To: your-email@domain.com
+  Subject: "Optimization Loop Complete | {{actions_taken}} improvements queued"
+  Body:
+    - Content refreshes triggered: {{count}}
+    - New keywords queued: {{count}}
+    - Strategy rules updated: {{count}}
+    - Prompt rules updated: {{count}}
+    - Estimated impact: {{AI_estimate}}
+
+STEP 8: LOG OPTIMIZATION HISTORY
+  Module: Google Sheets > Add Row
+  Sheet: "OptimizationLog"
+  Columns:
+  | Date | Action Type | Target URL/Keyword | Issue | Action Taken | Expected Impact | Actual Impact (filled later) |
+
+--------------------------------------------------------------------------------
+INPUTS & OUTPUTS:
+--------------------------------------------------------------------------------
+
+INPUTS:
+  - Weekly performance data from Workflow 10
+  - Historical trend data (4+ weeks)
+  - Current content inventory (PublishedArticles sheet)
+  - Current keyword rankings
+  - Strategy configuration
+
+OUTPUTS:
+  - Content refresh briefs queued to Workflow 03
+  - New keyword targets queued to Workflow 01/02
+  - Updated strategy configuration (content types, word counts, CTAs)
+  - Updated prompt configuration for future AI content
+  - Optimization action report
+  - Optimization history log
+
+THE FEEDBACK LOOP (How it connects everything):
+  Workflow 11 -> Workflow 01: New keywords to research
+  Workflow 11 -> Workflow 02: Updated strategy rules for planning
+  Workflow 11 -> Workflow 03: Content refresh briefs + improved prompt rules
+  Workflow 11 -> Workflow 07: Optimized CTA/lead magnet recommendations
+  Workflow 11 -> Workflow 09: Subject line optimization data
+
+--------------------------------------------------------------------------------
+TOOLS / APIs INVOLVED:
+--------------------------------------------------------------------------------
+  - Make.com (orchestration, routing)
+  - OpenAI API (performance analysis, optimization recommendations)
+  - Google Sheets (data storage, config management)
+  - Google Docs (refresh briefs)
+  - Gmail (optimization reports)
+  - Webhooks (receive data, trigger downstream workflows)
+
+--------------------------------------------------------------------------------
+OPTIMIZATION OPPORTUNITIES:
+--------------------------------------------------------------------------------
+  1. Implement automated A/B title tag testing (change title, measure CTR change)
+  2. Add backlink monitoring (Ahrefs API) to track link building impact
+  3. Predict content decay before it happens using ML trend analysis
+  4. Auto-generate content update schedules (evergreen content refreshed quarterly)
+  5. Compare performance against competitors to spot market shifts
+  6. Build a content scoring model trained on your own performance data
+  7. Add automated internal link optimization (find orphaned pages, fix them)

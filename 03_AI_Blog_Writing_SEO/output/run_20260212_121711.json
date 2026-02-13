@@ -1,0 +1,40 @@
+{
+  "articles_written": 3,
+  "avg_seo_score": 82,
+  "total_rewrites": 0,
+  "total_links_resolved": 3,
+  "articles": [
+    {
+      "title": "The Complete Guide to Lead Generation Strategies",
+      "keyword": "lead generation strategies",
+      "slug": "lead-generation-strategies",
+      "seo_score": 82,
+      "word_count": 485,
+      "rewrites": 0,
+      "links_resolved": 1,
+      "publish_date": "2026-02-14"
+    },
+    {
+      "title": "How to Master Email Marketing Automation in 2026",
+      "keyword": "email marketing automation",
+      "slug": "email-marketing-automation",
+      "seo_score": 82,
+      "word_count": 486,
+      "rewrites": 0,
+      "links_resolved": 1,
+      "publish_date": "2026-02-17"
+    },
+    {
+      "title": "10 Best CRM Software Tools Compared",
+      "keyword": "best crm software",
+      "slug": "best-crm-software",
+      "seo_score": 82,
+      "word_count": 484,
+      "rewrites": 0,
+      "links_resolved": 1,
+      "publish_date": "2026-02-19"
+    }
+  ],
+  "elapsed_seconds": 0.0,
+  "timestamp": "2026-02-12T12:17:11.731408"
+}

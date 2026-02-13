@@ -1,0 +1,159 @@
+================================================================================
+WORKFLOW 04: FEATURED IMAGE & VISUAL GENERATION
+================================================================================
+
+WORKFLOW NAME: AI Image Generator for Blog & Social Posts
+
+TRIGGER (Make.com Module):
+- Google Sheets > Watch Rows: Triggers when PublishQueue row has
+  Image_Needed = true
+
+--------------------------------------------------------------------------------
+AI AGENT ROLE:
+--------------------------------------------------------------------------------
+The AI agent acts as a Visual Content Creator. It:
+- Generates image prompts based on article title and keyword
+- Creates featured images via AI image generation API
+- Creates social media thumbnail variants
+- Optimizes images (compression, alt text, file naming)
+- Uploads images to cloud storage / WordPress media library
+
+--------------------------------------------------------------------------------
+STEP-BY-STEP AUTOMATION LOGIC:
+--------------------------------------------------------------------------------
+
+STEP 1: TRIGGER ON IMAGE REQUEST
+  Module: Google Sheets > Watch Rows
+  Sheet: "PublishQueue"
+  Filter: Image_Needed = true AND Image_Status = empty
+
+STEP 2: AI IMAGE PROMPT GENERATION
+  Module: OpenAI > Create Chat Completion
+  Model: gpt-4o
+  Prompt Template:
+  """
+  Generate an image prompt for an AI image generator (DALL-E / Midjourney style).
+
+  Blog Title: {{title}}
+  Keyword: {{keyword}}
+  Content Type: {{content_type}}
+  Brand Style: modern, clean, professional, blue/white color scheme
+
+  Requirements:
+  1. Featured Image (1200x630px): Blog hero image, no text on image
+  2. Social Thumbnail (1080x1080px): Eye-catching, suitable for Instagram/LinkedIn
+  3. Pinterest Pin (1000x1500px): Vertical format, can include title overlay space
+
+  Return JSON:
+  {
+    "featured_prompt": "A detailed prompt for the main blog image...",
+    "social_prompt": "A detailed prompt for social media square...",
+    "pinterest_prompt": "A detailed prompt for Pinterest vertical...",
+    "alt_text": "Descriptive alt text for SEO (include keyword)",
+    "file_name": "keyword-optimized-file-name.png"
+  }
+  """
+
+STEP 3: GENERATE FEATURED IMAGE
+  Module: HTTP > Make a Request
+  Action: Call DALL-E 3 API (or Stability AI / Leonardo AI)
+  Endpoint: POST https://api.openai.com/v1/images/generations
+  Headers: { "Authorization": "Bearer YOUR_OPENAI_KEY" }
+  Body:
+  {
+    "model": "dall-e-3",
+    "prompt": "{{featured_prompt}}",
+    "n": 1,
+    "size": "1792x1024",
+    "quality": "standard",
+    "response_format": "url"
+  }
+  Output: image_url
+
+STEP 4: GENERATE SOCIAL MEDIA THUMBNAIL
+  Module: HTTP > Make a Request
+  Same API call with:
+  {
+    "prompt": "{{social_prompt}}",
+    "size": "1024x1024"
+  }
+
+STEP 5: DOWNLOAD & OPTIMIZE IMAGES
+  Module: HTTP > Get a File
+  Action: Download image from generated URL
+  Module: Image Optimizer (Make.com built-in or TinyPNG API)
+  Action: Compress image to < 200KB while maintaining quality
+  API: POST https://api.tinify.com/shrink
+  Headers: { "Authorization": "Basic YOUR_TINYPNG_KEY" }
+
+STEP 6: RENAME FILE FOR SEO
+  Module: Tools > Set Variable
+  Action: Rename file to {{keyword-slug}}-featured-image.png
+  (Search engines read file names for image SEO)
+
+STEP 7: UPLOAD TO WORDPRESS MEDIA LIBRARY
+  Module: WordPress > Upload a Media File
+  Action: Upload optimized image to WP media library
+  Set: Alt text = {{alt_text}}, Title = {{keyword}} featured image
+  Output: media_id, media_url
+
+  ALTERNATIVE: Upload to Cloudinary / Google Cloud Storage
+  Module: HTTP > Make a Request
+  Endpoint: Cloudinary upload API
+  Output: secure_url
+
+STEP 8: UPDATE PUBLISH QUEUE
+  Module: Google Sheets > Update Row
+  Sheet: "PublishQueue"
+  Set:
+    Image_Status = "generated"
+    Featured_Image_URL = {{media_url}}
+    Social_Image_URL = {{social_media_url}}
+    Image_Alt_Text = {{alt_text}}
+
+STEP 9: STORE IMAGE METADATA
+  Module: Google Sheets > Add Row
+  Sheet: "ImageLibrary"
+  Data: article_title, image_url, alt_text, file_name, date_created
+
+--------------------------------------------------------------------------------
+INPUTS & OUTPUTS:
+--------------------------------------------------------------------------------
+
+INPUTS:
+  - Article title and keyword (from PublishQueue)
+  - Brand style guidelines (color scheme, style)
+  - Image size requirements
+
+OUTPUTS:
+  - Featured image (1200x630) uploaded to WordPress/cloud
+  - Social thumbnail (1080x1080) for social media repurposing
+  - Pinterest pin image (1000x1500)
+  - Image metadata (alt text, file name, URLs)
+  - Updated PublishQueue row with image URLs
+
+DATA STRUCTURE (ImageLibrary Sheet):
+  | Article Title         | Image URL              | Alt Text           | File Name              | Date       |
+  |-----------------------|------------------------|--------------------|------------------------|------------|
+  | Guide to Lead Gen     | https://wp.com/img.png | lead gen guide img  | lead-gen-guide.png     | 2026-02-12 |
+
+--------------------------------------------------------------------------------
+TOOLS / APIs INVOLVED:
+--------------------------------------------------------------------------------
+  - Make.com (orchestration)
+  - Google Sheets (queue tracking, image library)
+  - OpenAI DALL-E 3 API (image generation)
+  - TinyPNG API (image compression)
+  - WordPress REST API (media upload)
+  - Cloudinary (optional: cloud image hosting + transformations)
+
+--------------------------------------------------------------------------------
+OPTIMIZATION OPPORTUNITIES:
+--------------------------------------------------------------------------------
+  1. Generate multiple image variants and A/B test click-through rates
+  2. Use Canva API to add text overlays / branding to generated images
+  3. Auto-generate infographics from article data points
+  4. Create image sitemap entries for Google Image search
+  5. Use Leonardo AI or Midjourney for higher quality images
+  6. Build a reusable image template library by content type
+  7. Add watermark/branding overlay automatically

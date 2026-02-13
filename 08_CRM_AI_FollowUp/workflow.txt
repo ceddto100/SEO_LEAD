@@ -1,0 +1,229 @@
+================================================================================
+WORKFLOW 08: CRM + AI FOLLOW-UP ENGINE
+================================================================================
+
+WORKFLOW NAME: AI-Powered CRM Follow-Up & Sales Automation
+
+TRIGGER (Make.com Module):
+- Webhooks > Custom Webhook: Receives lead data from Workflow 07
+- HubSpot / Pipedrive > Watch Deals/Contacts: Triggers on new CRM entries
+- Schedule: Daily at 8 AM to check for follow-up reminders due today
+
+--------------------------------------------------------------------------------
+AI AGENT ROLE:
+--------------------------------------------------------------------------------
+The AI agent acts as an AI Sales Development Rep (SDR). It:
+- Writes personalized follow-up emails based on lead behavior and profile
+- Determines optimal follow-up timing and cadence
+- Adapts messaging based on lead engagement (opens, clicks, replies)
+- Escalates hot leads to human sales reps
+- Manages the entire follow-up sequence automatically
+
+--------------------------------------------------------------------------------
+STEP-BY-STEP AUTOMATION LOGIC:
+--------------------------------------------------------------------------------
+
+STEP 1: RECEIVE LEAD FOR FOLLOW-UP
+  Module: Webhooks > Custom Webhook
+  Payload:
+  {
+    "lead": {
+      "name": "John Doe",
+      "email": "john@acme.com",
+      "company": "Acme Corp",
+      "score": 78,
+      "tier": "warm",
+      "segment": "seo-smb",
+      "source": "blog-cta",
+      "lead_magnet": "free-seo-checklist",
+      "page_url": "https://site.com/blog/lead-gen-guide"
+    },
+    "priority": false
+  }
+
+STEP 2: DETERMINE FOLLOW-UP CADENCE
+  Module: Router (Make.com)
+  Logic:
+    HOT (80-100): Day 0 (immediate), Day 1, Day 3, Day 7
+    WARM (50-79): Day 1, Day 3, Day 7, Day 14
+    COOL (20-49): Day 3, Day 7, Day 14, Day 30
+
+  Module: Tools > Set Variable
+  Set: follow_up_sequence = [
+    {"day": 1, "type": "personalized_email"},
+    {"day": 3, "type": "value_add_email"},
+    {"day": 7, "type": "case_study_email"},
+    {"day": 14, "type": "last_chance_email"}
+  ]
+
+STEP 3: AI PERSONALIZED EMAIL GENERATION
+  Module: OpenAI > Create Chat Completion
+  Model: gpt-4o
+  Prompt Template:
+  """
+  You are a sales development rep writing a follow-up email.
+
+  LEAD PROFILE:
+  - Name: {{name}}
+  - Company: {{company}}
+  - Industry: {{industry}}
+  - Source: Came from "{{page_url}}" and downloaded "{{lead_magnet}}"
+  - Score: {{score}} ({{tier}})
+
+  FOLLOW-UP STAGE: {{sequence_step}} of {{total_steps}}
+  FOLLOW-UP TYPE: {{type}}
+
+  Previous interactions:
+  {{previous_email_subjects_and_open_status}}
+
+  WRITING RULES:
+  1. Keep it under 150 words
+  2. Personalize based on their company/industry
+  3. Reference what they downloaded or read
+  4. Provide genuine value (tip, insight, resource)
+  5. One clear CTA (reply, book a call, read resource)
+  6. NO pushy sales language
+  7. Write like a real human, not a template
+  8. Subject line: short, curiosity-driven, no spam triggers
+
+  For each follow-up type:
+  - personalized_email: Reference their specific interest, offer quick tip
+  - value_add_email: Share a relevant case study or insight
+  - case_study_email: Share a specific result/ROI example
+  - last_chance_email: Friendly check-in, ask if timing is wrong
+
+  Return JSON:
+  {
+    "subject": "...",
+    "body": "...",
+    "cta_type": "reply / book_call / read_resource",
+    "cta_link": "..."
+  }
+  """
+
+STEP 4: SCHEDULE & SEND FOLLOW-UP EMAIL
+  Module: Email > Send (with delay/scheduling)
+  To: {{lead_email}}
+  From: your-name@yourdomain.com
+  Subject: {{ai_subject}}
+  Body: {{ai_body}} (HTML formatted)
+  Schedule: {{calculated_send_date}} at 9:00 AM lead's timezone
+
+  ALTERNATIVE: Use Mailgun / SendGrid API for better deliverability tracking
+  Module: HTTP > Make a Request
+  Endpoint: POST https://api.mailgun.net/v3/yourdomain.com/messages
+  Body:
+  {
+    "from": "Your Name <you@yourdomain.com>",
+    "to": "{{lead_email}}",
+    "subject": "{{subject}}",
+    "html": "{{body}}",
+    "o:deliverytime": "{{scheduled_datetime}}",
+    "o:tracking-opens": "yes",
+    "o:tracking-clicks": "yes"
+  }
+
+STEP 5: TRACK EMAIL ENGAGEMENT
+  Module: Webhooks > Custom Webhook (receives Mailgun/SendGrid events)
+  Events: opened, clicked, replied, bounced, unsubscribed
+  Action: Update lead record with engagement data
+
+  Module: Google Sheets > Update Row
+  Sheet: "FollowUpTracker"
+  Update: email_status = opened/clicked/replied, engagement_date
+
+STEP 6: ADAPTIVE FOLLOW-UP LOGIC
+  Module: Router (based on engagement)
+
+  Route A: Lead OPENED but didn't click/reply
+    -> Continue sequence, next email adds more value
+    -> AI adjusts tone: "I noticed you checked out my last email..."
+
+  Route B: Lead CLICKED a link
+    -> Score boost (+10), potentially upgrade tier
+    -> AI sends more targeted content related to what they clicked
+
+  Route C: Lead REPLIED
+    -> Immediately notify human sales rep via Slack
+    -> Pause automated sequence
+    -> Create task in CRM: "Reply received from {{name}} - respond ASAP"
+
+  Route D: Lead didn't open any emails after 2 sends
+    -> Try different subject line approach
+    -> After 4 unopened: move to "re-engage" list, pause sequence
+
+  Route E: Lead unsubscribed
+    -> Remove from all sequences immediately
+    -> Update CRM: status = "unsubscribed"
+
+STEP 7: CRM UPDATE
+  Module: HubSpot > Update Contact
+  Updates:
+    - Last Contact Date
+    - Follow-Up Stage (1/4, 2/4, etc.)
+    - Engagement Score (opens + clicks)
+    - Deal Stage (if applicable)
+    - Notes: AI-generated summary of interactions
+
+STEP 8: ESCALATION TO HUMAN SALES
+  Module: Slack > Send Message (conditional)
+  Trigger: Lead replies OR score crosses 90 OR books a meeting
+  Channel: #sales-leads
+  Message:
+  """
+  HOT LEAD ALERT
+  Name: {{name}} | Company: {{company}}
+  Score: {{score}} | Tier: HOT
+  Action: {{replied / booked_meeting / high_engagement}}
+  CRM Link: {{crm_contact_url}}
+  Context: Downloaded {{lead_magnet}}, opened {{open_count}} emails
+  """
+
+STEP 9: LOG ALL FOLLOW-UP ACTIVITY
+  Module: Google Sheets > Add Row
+  Sheet: "FollowUpTracker"
+  Columns:
+  | Lead Name | Email | Sequence Step | Email Subject | Send Date | Opened | Clicked | Replied | Status |
+
+--------------------------------------------------------------------------------
+INPUTS & OUTPUTS:
+--------------------------------------------------------------------------------
+
+INPUTS:
+  - Lead data from Workflow 07 (name, email, score, tier, segment)
+  - Follow-up cadence configuration
+  - Previous interaction history
+  - Email engagement events (opens, clicks, replies)
+
+OUTPUTS:
+  - Personalized follow-up emails (AI-written, scheduled)
+  - Updated CRM records with engagement data
+  - Slack alerts for hot leads and replies
+  - Follow-up activity log
+
+DATA STRUCTURE (FollowUpTracker):
+  | Name     | Email           | Step | Subject             | Sent       | Opened | Clicked | Replied | Status    |
+  |----------|-----------------|------|---------------------|------------|--------|---------|---------|-----------|
+  | John Doe | john@acme.com   | 2/4  | Quick SEO tip for.. | 2026-02-14 | yes    | yes     | no      | active    |
+
+--------------------------------------------------------------------------------
+TOOLS / APIs INVOLVED:
+--------------------------------------------------------------------------------
+  - Make.com (orchestration, routing, scheduling)
+  - OpenAI API (email writing, adaptive messaging)
+  - Mailgun / SendGrid API (email sending + tracking)
+  - HubSpot / Pipedrive CRM API (contact management)
+  - Slack API (sales notifications)
+  - Google Sheets (tracking)
+  - Webhooks (engagement event processing)
+
+--------------------------------------------------------------------------------
+OPTIMIZATION OPPORTUNITIES:
+--------------------------------------------------------------------------------
+  1. A/B test AI-generated subject lines and track open rates
+  2. Add LinkedIn connection request automation for warm/hot leads
+  3. Implement "breakup email" for unresponsive leads (creates urgency)
+  4. Use send-time optimization (ML to find best time per lead)
+  5. Add voicemail drop automation for hot leads (via Twilio)
+  6. Build re-engagement campaign for leads that went cold after 60 days
+  7. Track email-to-meeting conversion rate per follow-up template style

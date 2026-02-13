@@ -1,0 +1,170 @@
+================================================================================
+WORKFLOW 01: KEYWORD & MARKET RESEARCH AUTOMATION
+================================================================================
+
+WORKFLOW NAME: Keyword Discovery & Competitor Analysis Engine
+
+TRIGGER (Make.com Module):
+- Schedule module: Runs every Monday at 6:00 AM
+- OR Manual webhook trigger: POST to https://hook.make.com/your-webhook-id
+  with body: { "niche": "your niche", "seed_keywords": ["keyword1","keyword2"] }
+
+--------------------------------------------------------------------------------
+AI AGENT ROLE:
+--------------------------------------------------------------------------------
+The AI agent acts as an SEO Research Analyst. It:
+- Generates seed keyword variations from a niche/topic
+- Analyzes search volume and competition data from APIs
+- Identifies content gaps competitors are missing
+- Clusters keywords by intent (informational, transactional, navigational)
+- Prioritizes keywords by opportunity score
+
+--------------------------------------------------------------------------------
+STEP-BY-STEP AUTOMATION LOGIC:
+--------------------------------------------------------------------------------
+
+STEP 1: TRIGGER & INPUT COLLECTION
+  Module: Schedule / Webhook
+  Action: Fire the scenario on schedule or on-demand
+  Input: Niche topic or seed keywords from Google Sheet row
+
+STEP 2: PULL SEED KEYWORDS FROM GOOGLE SHEET
+  Module: Google Sheets > Search Rows
+  Action: Read the "Niche Topics" sheet, Column A = niche, Column B = seed keywords
+  Config: Sheet ID, Tab name = "NicheInputs"
+
+STEP 3: EXPAND KEYWORDS VIA API
+  Module: HTTP > Make a Request
+  Action: Call DataForSEO / SEMrush / Ahrefs API
+  Endpoint: POST https://api.dataforseo.com/v3/keywords_data/google/search_volume/live
+  Headers: { "Authorization": "Basic YOUR_API_KEY_BASE64" }
+  Body (JSON):
+  {
+    "data": [{
+      "keywords": ["{{seed_keyword_1}}", "{{seed_keyword_2}}"],
+      "location_code": 2840,
+      "language_code": "en"
+    }]
+  }
+  Output: Array of keywords with search_volume, competition, cpc
+
+STEP 4: AI KEYWORD EXPANSION & CLUSTERING
+  Module: OpenAI > Create Chat Completion
+  Model: gpt-4o
+  Prompt Template:
+  """
+  You are an SEO keyword strategist. Given these seed keywords and their data:
+
+  {{step3_keyword_results}}
+
+  Tasks:
+  1. Generate 30 additional long-tail keyword variations
+  2. Cluster ALL keywords into groups by search intent:
+     - Informational (how-to, what-is, guide)
+     - Transactional (buy, best, pricing, review)
+     - Navigational (brand + keyword)
+  3. Score each keyword 1-10 on "opportunity" (high volume + low competition = high score)
+  4. Return as JSON:
+  {
+    "clusters": [
+      {
+        "intent": "informational",
+        "keywords": [
+          {"keyword": "...", "volume": 0, "competition": "low", "opportunity_score": 8}
+        ]
+      }
+    ]
+  }
+  """
+
+STEP 5: COMPETITOR GAP ANALYSIS
+  Module: HTTP > Make a Request
+  Action: Pull top 10 ranking URLs for primary keyword
+  Endpoint: DataForSEO SERP API
+  POST https://api.dataforseo.com/v3/serp/google/organic/live/regular
+  Body:
+  {
+    "data": [{
+      "keyword": "{{primary_keyword}}",
+      "location_code": 2840,
+      "language_code": "en"
+    }]
+  }
+
+STEP 6: AI COMPETITOR ANALYSIS
+  Module: OpenAI > Create Chat Completion
+  Prompt Template:
+  """
+  Analyze these top 10 SERP results for "{{primary_keyword}}":
+
+  {{step5_serp_results}}
+
+  Identify:
+  1. Content gaps (topics competitors are NOT covering)
+  2. Weak content (thin pages you can outrank)
+  3. Content format opportunities (listicles, guides, tools missing)
+  4. Recommended angles for new content
+
+  Return as JSON:
+  {
+    "gaps": ["topic1", "topic2"],
+    "weak_competitors": [{"url": "...", "weakness": "..."}],
+    "format_opportunities": ["comparison table", "video guide"],
+    "recommended_angles": ["..."]
+  }
+  """
+
+STEP 7: SAVE RESULTS TO GOOGLE SHEET
+  Module: Google Sheets > Add Row
+  Action: Write each keyword cluster + scores to "KeywordResearch" sheet
+  Columns: Keyword | Volume | Competition | Intent | Opportunity Score | Date
+  Also write competitor gaps to "ContentGaps" sheet
+
+STEP 8: NOTIFY & QUEUE CONTENT
+  Module: Google Sheets > Add Row (to "ContentQueue" sheet)
+  Action: Push top 10 opportunity keywords to the Content Strategy pipeline
+  Module: Email / Slack > Send Notification
+  Action: Send summary email: "12 new keyword opportunities found. Top: {{top_keyword}}"
+
+--------------------------------------------------------------------------------
+INPUTS & OUTPUTS:
+--------------------------------------------------------------------------------
+
+INPUTS:
+  - Niche/topic (string)
+  - Seed keywords (array of strings)
+  - Target location code (integer, default 2840 = US)
+  - Google Sheet ID for storage
+
+OUTPUTS:
+  - Keyword list with volume, competition, CPC, intent, opportunity score
+  - Keyword clusters grouped by intent (JSON)
+  - Competitor gap analysis (JSON)
+  - Content queue entries in Google Sheets
+  - Notification email/Slack message
+
+DATA STRUCTURE EXAMPLE (Google Sheet Row):
+  | Keyword                    | Volume | Competition | CPC  | Intent        | Score | Date       |
+  |---------------------------|--------|-------------|------|---------------|-------|------------|
+  | best crm for small biz    | 2400   | 0.34        | 4.50 | transactional | 9     | 2026-02-12 |
+  | how to generate leads     | 8100   | 0.67        | 3.20 | informational | 7     | 2026-02-12 |
+
+--------------------------------------------------------------------------------
+TOOLS / APIs INVOLVED:
+--------------------------------------------------------------------------------
+  - Make.com (orchestration)
+  - Google Sheets (data storage & input)
+  - DataForSEO API or SEMrush API (keyword data + SERP data)
+  - OpenAI API / GPT-4o (keyword expansion, clustering, gap analysis)
+  - Gmail / Slack (notifications)
+
+--------------------------------------------------------------------------------
+OPTIMIZATION OPPORTUNITIES:
+--------------------------------------------------------------------------------
+  1. Add Google Trends API integration for trending topic detection
+  2. Use historical keyword data to identify seasonal opportunities
+  3. Auto-filter keywords below a minimum volume threshold (e.g., < 100/mo)
+  4. Add "People Also Ask" scraping for question-based content ideas
+  5. Score keywords by estimated traffic value (volume x CTR x CPC)
+  6. Run weekly and compare deltas to spot rising/falling keywords
+  7. Feed winning keywords directly into Workflow 02 (Content Strategy)

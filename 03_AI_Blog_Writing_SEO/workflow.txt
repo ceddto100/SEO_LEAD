@@ -1,0 +1,204 @@
+================================================================================
+WORKFLOW 03: AI BLOG WRITING & SEO OPTIMIZATION
+================================================================================
+
+WORKFLOW NAME: AI Content Writer & On-Page SEO Engine
+
+TRIGGER (Make.com Module):
+- Google Sheets > Watch Rows: Triggers when ContentCalendar row Status = "planned"
+  and Publish Date = today or tomorrow
+- OR Webhook: Manual trigger for on-demand article generation
+
+--------------------------------------------------------------------------------
+AI AGENT ROLE:
+--------------------------------------------------------------------------------
+The AI agent acts as a Senior SEO Content Writer. It:
+- Takes the blog outline and writes a full-length, SEO-optimized article
+- Applies on-page SEO (keyword density, headers, internal links, schema markup)
+- Generates meta tags, slug, and structured data
+- Runs a self-audit for SEO quality before passing to publish
+
+--------------------------------------------------------------------------------
+STEP-BY-STEP AUTOMATION LOGIC:
+--------------------------------------------------------------------------------
+
+STEP 1: TRIGGER ON SCHEDULED CONTENT
+  Module: Google Sheets > Watch Rows
+  Sheet: "ContentCalendar"
+  Filter: Status = "planned" AND PublishDate <= today + 1 day
+
+STEP 2: FETCH OUTLINE FROM GOOGLE DOCS
+  Module: Google Docs > Get Content of a Document
+  Document ID: {{outline_doc_id}} from ContentCalendar row
+  Output: Full outline text (H2s, H3s, notes, FAQ)
+
+STEP 3: AI ARTICLE WRITING
+  Module: OpenAI > Create Chat Completion
+  Model: gpt-4o
+  Max Tokens: 4096
+  Prompt Template:
+  """
+  You are an expert SEO blog writer. Write a complete blog article.
+
+  TITLE: {{title}}
+  PRIMARY KEYWORD: {{keyword}}
+  TARGET WORD COUNT: {{word_count}}
+  CONTENT TYPE: {{content_type}}
+  OUTLINE:
+  {{step2_outline}}
+
+  WRITING RULES:
+  1. Use the primary keyword in: H1 title, first 100 words, 2-3 H2s, meta description, last paragraph
+  2. Keyword density: 1-2% (natural, never forced)
+  3. Use related LSI keywords throughout (synonyms, related terms)
+  4. Write in a conversational, authoritative tone
+  5. Short paragraphs (2-3 sentences max)
+  6. Use bullet points and numbered lists where appropriate
+  7. Include a compelling introduction with a hook
+  8. Include a "Key Takeaways" box at the top
+  9. Include a FAQ section with schema-ready Q&A format
+  10. Include CTA placements: one mid-article, one at the end
+  11. Add placeholder markers for internal links: [INTERNAL_LINK: anchor text -> slug]
+  12. Add placeholder markers for images: [IMAGE: description of image needed]
+  13. End with a strong conclusion and call to action
+
+  FORMAT: Return as HTML with proper heading tags (h1, h2, h3), paragraph tags,
+  list tags, and bold/italic for emphasis. Do NOT include <html>, <head>, or <body> tags.
+  Just the article content HTML.
+  """
+
+STEP 4: AI SEO META GENERATION
+  Module: OpenAI > Create Chat Completion
+  Prompt Template:
+  """
+  Generate SEO metadata for this article:
+
+  Title: {{title}}
+  Keyword: {{keyword}}
+
+  Return JSON:
+  {
+    "meta_title": "... (max 60 chars, include keyword)",
+    "meta_description": "... (max 155 chars, include keyword, add CTA)",
+    "slug": "keyword-optimized-slug",
+    "focus_keyword": "{{keyword}}",
+    "secondary_keywords": ["kw1", "kw2", "kw3"],
+    "schema_markup": {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "headline": "...",
+      "description": "...",
+      "author": { "@type": "Person", "name": "Your Brand" },
+      "datePublished": "{{publish_date}}",
+      "image": "{{featured_image_url}}"
+    },
+    "og_title": "...",
+    "og_description": "...",
+    "twitter_title": "...",
+    "twitter_description": "..."
+  }
+  """
+
+STEP 5: AI SEO QUALITY AUDIT
+  Module: OpenAI > Create Chat Completion
+  Prompt Template:
+  """
+  You are an SEO auditor. Review this article for SEO quality:
+
+  ARTICLE HTML:
+  {{step3_article_html}}
+
+  META DATA:
+  {{step4_meta_json}}
+
+  Check and score (1-10) each factor:
+  1. Keyword in H1 title
+  2. Keyword in first 100 words
+  3. Keyword density (1-2%)
+  4. H2/H3 structure and keyword usage
+  5. Internal link placeholders present
+  6. Image placeholders present
+  7. FAQ section present
+  8. CTA placements present
+  9. Meta title length (50-60 chars)
+  10. Meta description length (120-155 chars)
+  11. Readability (short paragraphs, lists)
+  12. Word count meets target
+
+  Return JSON:
+  {
+    "overall_score": 85,
+    "checks": [
+      {"factor": "Keyword in H1", "score": 10, "pass": true, "note": ""},
+      {"factor": "Keyword density", "score": 7, "pass": true, "note": "1.4% - good"}
+    ],
+    "issues": ["No internal links to pillar page"],
+    "recommendations": ["Add link to pillar article in intro"]
+  }
+  """
+
+STEP 6: CONDITIONAL - REWRITE IF SCORE < 70
+  Module: Router (Make.com)
+  Route A: If overall_score >= 70 -> proceed to Step 7
+  Route B: If overall_score < 70 -> loop back to Step 3 with audit feedback appended to prompt
+
+STEP 7: RESOLVE INTERNAL LINKS
+  Module: Google Sheets > Search Rows
+  Sheet: "PublishedArticles"
+  Action: Look up slugs for [INTERNAL_LINK] placeholders
+  Module: Tools > Text Replace
+  Action: Replace [INTERNAL_LINK: text -> slug] with <a href="/blog/slug">text</a>
+
+STEP 8: SAVE ARTICLE TO GOOGLE DOCS
+  Module: Google Docs > Create a Document
+  Title: "DRAFT - {{title}}"
+  Content: Final HTML article
+  Folder: "Blog Drafts" folder
+
+STEP 9: UPDATE CONTENT CALENDAR
+  Module: Google Sheets > Update Row
+  Sheet: "ContentCalendar"
+  Set: Status = "written", SEO_Score = {{overall_score}}, Draft_Link = {{doc_url}}
+
+STEP 10: QUEUE FOR PUBLISHING
+  Module: Google Sheets > Add Row
+  Sheet: "PublishQueue"
+  Data: title, slug, html_content, meta_data, publish_date, featured_image_needed = true
+
+--------------------------------------------------------------------------------
+INPUTS & OUTPUTS:
+--------------------------------------------------------------------------------
+
+INPUTS:
+  - Content calendar entry (title, keyword, type, word count, outline doc ID)
+  - Blog outline (from Google Docs)
+  - Published articles list (for internal linking)
+
+OUTPUTS:
+  - Full HTML blog article
+  - SEO metadata (meta title, description, schema, OG tags)
+  - SEO audit score and report
+  - Draft saved to Google Docs
+  - Publish queue entry
+
+DATA STRUCTURE (PublishQueue Row):
+  | Title | Slug | HTML Doc ID | Meta Title | Meta Desc | Schema JSON | Pub Date | Image Needed | SEO Score |
+
+--------------------------------------------------------------------------------
+TOOLS / APIs INVOLVED:
+--------------------------------------------------------------------------------
+  - Make.com (orchestration, routing, iteration)
+  - Google Sheets (calendar, publish queue)
+  - Google Docs (outline input, draft output)
+  - OpenAI API / GPT-4o (writing, meta gen, SEO audit)
+
+--------------------------------------------------------------------------------
+OPTIMIZATION OPPORTUNITIES:
+--------------------------------------------------------------------------------
+  1. Add SurferSEO or Clearscope API for real-time content scoring
+  2. Use NLP API to check readability grade level (aim for Grade 6-8)
+  3. Auto-generate table of contents from H2/H3 structure
+  4. Add plagiarism check via Copyscape API before publishing
+  5. Track SEO score trends over time to improve prompt quality
+  6. A/B test different writing styles and measure engagement
+  7. Feed completed articles directly to Workflow 04 (Image Gen) and 05 (Publishing)

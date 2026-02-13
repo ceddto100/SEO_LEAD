@@ -1,0 +1,217 @@
+================================================================================
+WORKFLOW 10: ANALYTICS + CONVERSION TRACKING
+================================================================================
+
+WORKFLOW NAME: SEO & Lead Performance Analytics Dashboard Engine
+
+TRIGGER (Make.com Module):
+- Schedule: Daily at 11 PM (end-of-day data pull)
+- Schedule: Weekly on Sundays at 8 AM (weekly report generation)
+- Schedule: Monthly on 1st at 8 AM (monthly performance report)
+
+--------------------------------------------------------------------------------
+AI AGENT ROLE:
+--------------------------------------------------------------------------------
+The AI agent acts as a Data Analyst & Performance Reporter. It:
+- Pulls traffic and SEO data from Google Analytics & Search Console
+- Tracks lead conversion metrics across the funnel
+- Generates automated performance reports
+- Identifies trends, anomalies, and opportunities
+- Recommends actions based on data patterns
+
+--------------------------------------------------------------------------------
+STEP-BY-STEP AUTOMATION LOGIC:
+--------------------------------------------------------------------------------
+
+STEP 1: DAILY DATA PULL - GOOGLE ANALYTICS
+  Module: HTTP > Make a Request
+  Endpoint: POST https://analyticsdata.googleapis.com/v1beta/properties/{{property_id}}:runReport
+  Headers: { "Authorization": "Bearer {{google_oauth_token}}" }
+  Body:
+  {
+    "dateRanges": [{"startDate": "yesterday", "endDate": "yesterday"}],
+    "metrics": [
+      {"name": "sessions"},
+      {"name": "totalUsers"},
+      {"name": "newUsers"},
+      {"name": "screenPageViews"},
+      {"name": "averageSessionDuration"},
+      {"name": "bounceRate"},
+      {"name": "conversions"}
+    ],
+    "dimensions": [
+      {"name": "pagePath"},
+      {"name": "sessionSource"},
+      {"name": "sessionMedium"}
+    ]
+  }
+  Output: Daily traffic data per page and source
+
+STEP 2: DAILY DATA PULL - GOOGLE SEARCH CONSOLE
+  Module: HTTP > Make a Request
+  Endpoint: POST https://www.googleapis.com/webmasters/v3/sites/{{site_url}}/searchAnalytics/query
+  Headers: { "Authorization": "Bearer {{google_oauth_token}}" }
+  Body:
+  {
+    "startDate": "{{yesterday}}",
+    "endDate": "{{yesterday}}",
+    "dimensions": ["query", "page"],
+    "rowLimit": 100,
+    "dataState": "all"
+  }
+  Output: Keywords, impressions, clicks, CTR, average position per page
+
+STEP 3: PULL LEAD CONVERSION DATA
+  Module: Google Sheets > Search Rows
+  Sheet: "MasterLeadList"
+  Filter: Date = yesterday
+  Output: New leads count, sources, scores
+
+  Module: Google Sheets > Search Rows
+  Sheet: "ConversionTracking"
+  Filter: Date = yesterday
+  Output: Conversion data by source/medium/campaign
+
+STEP 4: PULL EMAIL PERFORMANCE DATA
+  Module: Google Sheets > Search Rows
+  Sheet: "EmailPerformance"
+  Filter: Date >= (today - 7 days)
+  Output: Open rates, click rates, unsubscribe rates
+
+STEP 5: STORE DAILY METRICS
+  Module: Google Sheets > Add Row
+  Sheet: "DailyMetrics"
+  Columns:
+  | Date | Sessions | Users | New Users | Pageviews | Bounce% | Avg Duration | Organic Traffic | New Leads | Lead Score Avg | Conversions |
+
+STEP 6: STORE KEYWORD RANKINGS
+  Module: Google Sheets > Add Row (Iterator per keyword)
+  Sheet: "KeywordRankings"
+  Columns:
+  | Date | Keyword | Impressions | Clicks | CTR | Avg Position | Page URL |
+
+STEP 7: WEEKLY AI PERFORMANCE REPORT
+  Module: Schedule > Every Sunday 8 AM
+  Module: Google Sheets > Search Rows
+  Sheet: "DailyMetrics", filter last 7 days
+  Sheet: "KeywordRankings", filter last 7 days
+  Sheet: "MasterLeadList", filter last 7 days
+
+  Module: OpenAI > Create Chat Completion
+  Model: gpt-4o
+  Prompt Template:
+  """
+  You are a digital marketing analyst. Generate a weekly performance report.
+
+  THIS WEEK'S DATA:
+  Traffic Metrics: {{weekly_traffic_data}}
+  Keyword Rankings: {{weekly_keyword_data}}
+  Lead Metrics: {{weekly_lead_data}}
+  Email Metrics: {{weekly_email_data}}
+
+  LAST WEEK'S DATA (for comparison):
+  {{previous_week_data}}
+
+  Generate a report covering:
+  1. TRAFFIC SUMMARY: Total sessions, organic %, week-over-week change
+  2. TOP PERFORMING PAGES: Top 5 by traffic, top 5 by conversions
+  3. SEO RANKINGS: Keywords moving up, keywords moving down, new rankings
+  4. LEAD GENERATION: New leads, sources, average score, conversion rate
+  5. EMAIL PERFORMANCE: Average open rate, click rate, trends
+  6. ANOMALIES: Any unusual spikes or drops (flag anything > 20% change)
+  7. RECOMMENDATIONS: 3-5 specific actions to take this week
+
+  Return JSON:
+  {
+    "summary": "...",
+    "traffic": { "total": 0, "organic_pct": 0, "wow_change": "+5%" },
+    "top_pages": [...],
+    "seo_movers": { "up": [...], "down": [...] },
+    "leads": { "total": 0, "top_source": "...", "conversion_rate": "..." },
+    "email": { "avg_open": "...", "avg_click": "..." },
+    "anomalies": ["..."],
+    "recommendations": ["..."]
+  }
+  """
+
+STEP 8: BUILD REPORT EMAIL
+  Module: Tools > Set Variable
+  Action: Format AI report into readable HTML email
+  Module: Email > Send
+  To: your-email@domain.com + team@domain.com
+  Subject: "Weekly SEO & Lead Report | {{date_range}} | {{total_sessions}} sessions, {{new_leads}} leads"
+  Body: Formatted HTML report with charts/tables
+
+STEP 9: MONTHLY DEEP-DIVE REPORT
+  Module: Schedule > 1st of month at 8 AM
+  Same logic as Step 7 but with 30-day data range
+  Additional analysis:
+    - Month-over-month trends
+    - Content ROI (which articles drove the most leads)
+    - Cost per lead by source
+    - Funnel conversion rates by stage
+    - Revenue attribution (if tracking)
+
+STEP 10: ALERT ON ANOMALIES
+  Module: Router (conditional)
+  Condition: If any metric changes > 20% day-over-day
+  Action: Send immediate Slack/email alert
+  Module: Slack > Send Message
+  Channel: #analytics-alerts
+  Message: "ALERT: {{metric}} changed {{change%}} yesterday ({{previous}} -> {{current}}). Investigate: {{affected_page_or_keyword}}"
+
+STEP 11: FEED DATA TO PERFORMANCE FEEDBACK LOOP
+  Module: Webhooks > Custom Webhook (call)
+  Action: Send weekly performance summary to Workflow 11
+  Payload: { "top_pages": [...], "underperforming": [...], "keyword_opportunities": [...] }
+
+--------------------------------------------------------------------------------
+INPUTS & OUTPUTS:
+--------------------------------------------------------------------------------
+
+INPUTS:
+  - Google Analytics API credentials
+  - Google Search Console API credentials
+  - Google Sheets data (leads, emails, conversions)
+  - Historical data for comparison
+
+OUTPUTS:
+  - Daily metrics stored in Google Sheets
+  - Keyword ranking tracker
+  - Weekly performance report (email)
+  - Monthly deep-dive report (email)
+  - Anomaly alerts (Slack/email)
+  - Performance data feed to Workflow 11
+
+DATA STRUCTURE (DailyMetrics):
+  | Date       | Sessions | Users | Organic | Leads | Lead Avg Score | Bounce% | Conversions |
+  |------------|----------|-------|---------|-------|----------------|---------|-------------|
+  | 2026-02-12 | 1245     | 987   | 812     | 7     | 64             | 42%     | 3           |
+
+DATA STRUCTURE (KeywordRankings):
+  | Date       | Keyword              | Impressions | Clicks | CTR   | Position | Page                |
+  |------------|----------------------|-------------|--------|-------|----------|---------------------|
+  | 2026-02-12 | best crm tools       | 3400        | 187    | 5.5%  | 4.2      | /blog/best-crm      |
+
+--------------------------------------------------------------------------------
+TOOLS / APIs INVOLVED:
+--------------------------------------------------------------------------------
+  - Make.com (orchestration, scheduling)
+  - Google Analytics Data API (GA4) (traffic metrics)
+  - Google Search Console API (keyword rankings, impressions)
+  - Google Sheets (data storage, historical tracking)
+  - OpenAI API (report generation, anomaly analysis)
+  - Gmail (report delivery)
+  - Slack (anomaly alerts)
+  - Webhooks (feed to Workflow 11)
+
+--------------------------------------------------------------------------------
+OPTIMIZATION OPPORTUNITIES:
+--------------------------------------------------------------------------------
+  1. Build a Looker Studio / Google Data Studio dashboard connected to Sheets
+  2. Add heatmap tracking (Hotjar API) for page engagement analysis
+  3. Track Core Web Vitals and page speed scores
+  4. Add competitor ranking tracking (track their positions too)
+  5. Implement UTM link builder for campaign tracking
+  6. Add revenue attribution tracking (lead -> customer -> revenue)
+  7. Create automated monthly ROI summary for content investment

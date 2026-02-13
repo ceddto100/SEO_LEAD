@@ -1,0 +1,151 @@
+{
+  "summary": {
+    "niche": "test",
+    "seed_keywords": [
+      "seo",
+      "leads"
+    ],
+    "total_keywords": 3,
+    "total_gaps": 0,
+    "queued_for_content": 0,
+    "elapsed_seconds": 0.0,
+    "dry_run": true
+  },
+  "clustering": {
+    "_dry_run": true,
+    "clusters": [
+      {
+        "intent": "informational",
+        "keywords": [
+          {
+            "keyword": "how to generate leads online",
+            "volume": 3200,
+            "competition": "medium",
+            "opportunity_score": 8
+          },
+          {
+            "keyword": "lead generation strategies 2026",
+            "volume": 1800,
+            "competition": "low",
+            "opportunity_score": 9
+          }
+        ]
+      },
+      {
+        "intent": "transactional",
+        "keywords": [
+          {
+            "keyword": "best lead generation software",
+            "volume": 4500,
+            "competition": "high",
+            "opportunity_score": 6
+          }
+        ]
+      }
+    ]
+  },
+  "competitor_analysis": [
+    {
+      "_dry_run": true,
+      "clusters": [
+        {
+          "intent": "informational",
+          "keywords": [
+            {
+              "keyword": "how to generate leads online",
+              "volume": 3200,
+              "competition": "medium",
+              "opportunity_score": 8
+            },
+            {
+              "keyword": "lead generation strategies 2026",
+              "volume": 1800,
+              "competition": "low",
+              "opportunity_score": 9
+            }
+          ]
+        },
+        {
+          "intent": "transactional",
+          "keywords": [
+            {
+              "keyword": "best lead generation software",
+              "volume": 4500,
+              "competition": "high",
+              "opportunity_score": 6
+            }
+          ]
+        }
+      ],
+      "keyword": "lead generation strategies 2026"
+    },
+    {
+      "_dry_run": true,
+      "clusters": [
+        {
+          "intent": "informational",
+          "keywords": [
+            {
+              "keyword": "how to generate leads online",
+              "volume": 3200,
+              "competition": "medium",
+              "opportunity_score": 8
+            },
+            {
+              "keyword": "lead generation strategies 2026",
+              "volume": 1800,
+              "competition": "low",
+              "opportunity_score": 9
+            }
+          ]
+        },
+        {
+          "intent": "transactional",
+          "keywords": [
+            {
+              "keyword": "best lead generation software",
+              "volume": 4500,
+              "competition": "high",
+              "opportunity_score": 6
+            }
+          ]
+        }
+      ],
+      "keyword": "how to generate leads online"
+    },
+    {
+      "_dry_run": true,
+      "clusters": [
+        {
+          "intent": "informational",
+          "keywords": [
+            {
+              "keyword": "how to generate leads online",
+              "volume": 3200,
+              "competition": "medium",
+              "opportunity_score": 8
+            },
+            {
+              "keyword": "lead generation strategies 2026",
+              "volume": 1800,
+              "competition": "low",
+              "opportunity_score": 9
+            }
+          ]
+        },
+        {
+          "intent": "transactional",
+          "keywords": [
+            {
+              "keyword": "best lead generation software",
+              "volume": 4500,
+              "competition": "high",
+              "opportunity_score": 6
+            }
+          ]
+        }
+      ],
+      "keyword": "best lead generation software"
+    }
+  ]
+}

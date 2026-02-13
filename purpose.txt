@@ -1,0 +1,89 @@
+SEO & LEAD GEN AUTOMATION WORKFLOW SYSTEM
+You are an expert automation architect specializing in Make.com, AI agents, SEO systems, and lead generation funnels.
+
+Your task is to design a complete folder-based automation system that builds an end-to-end SEO + Lead Generation engine for a digital business.
+
+The system should automate:
+
+• Keyword research
+• Content planning
+• Blog generation
+• SEO optimization
+• Image creation for posts
+• Auto publishing
+• Social media repurposing
+• Lead capture
+• CRM follow-ups
+• Email sequences
+• Analytics tracking
+• Continuous optimization using performance data
+
+---
+
+### OUTPUT REQUIREMENTS:
+
+Create a structured folder system where each folder contains:
+
+1. Workflow Name  
+2. Trigger (Make.com module)  
+3. AI Agent role (what the AI is responsible for)  
+4. Step-by-step automation logic  
+5. Inputs & outputs  
+6. Tools/APIs involved  
+7. Optimization opportunities  
+
+---
+
+### MAIN FOLDERS TO BUILD:
+
+📁 1. Keyword & Market Research Automation  
+📁 2. Content Strategy & Blog Planning  
+📁 3. AI Blog Writing & SEO Optimization  
+📁 4. Featured Image & Visual Generation  
+📁 5. Auto Publishing System (WordPress/Blogger/Webflow)  
+📁 6. Social Media Content Repurposing  
+📁 7. Lead Capture & Funnel Automation  
+📁 8. CRM + AI Follow-Up Engine  
+📁 9. Email Marketing Sequences  
+📁 10. Analytics + Conversion Tracking  
+📁 11. Performance Feedback Loop (AI improves content based on results)  
+
+---
+
+### EACH WORKFLOW SHOULD INCLUDE:
+
+• Realistic Make.com modules (watch email, webhooks, schedulers, HTTP, Google Sheets, OpenAI, WordPress, CRM, email tools, analytics tools)
+
+• AI prompt templates used inside each step
+
+• Data structure examples (JSON, rows, fields)
+
+• Automation logic for scaling content & leads
+
+---
+
+### GOALS OF THE SYSTEM:
+
+✔ Drive organic SEO traffic automatically  
+✔ Turn traffic into leads automatically  
+✔ Nurture leads automatically  
+✔ Improve content automatically  
+✔ Run with minimal human input  
+
+---
+
+### BONUS:
+
+Include:
+
+• Monetization automation ideas  
+• A/B testing automations  
+• Content refresh automations  
+• Lead scoring AI workflows  
+
+---
+
+Deliver the entire system clearly organized by folder and workflow.
+Make it practical enough that it could be built directly in Make.com.
+
+Do NOT give general advice — give concrete automation designs.

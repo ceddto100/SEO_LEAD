@@ -1,0 +1,187 @@
+================================================================================
+WORKFLOW 05: AUTO PUBLISHING SYSTEM (WordPress / Blogger / Webflow)
+================================================================================
+
+WORKFLOW NAME: Multi-Platform Auto Publisher
+
+TRIGGER (Make.com Module):
+- Google Sheets > Watch Rows: Triggers when PublishQueue row has
+  Status = "ready" AND PublishDate = today
+- Schedule: Runs daily at 9:00 AM to check for scheduled posts
+
+--------------------------------------------------------------------------------
+AI AGENT ROLE:
+--------------------------------------------------------------------------------
+The AI agent acts as a Publishing Manager. It:
+- Validates article completeness before publishing
+- Formats content for the target platform (WordPress, Blogger, Webflow)
+- Publishes with all SEO metadata, images, categories, and tags
+- Verifies successful publication
+- Updates tracking sheets
+
+--------------------------------------------------------------------------------
+STEP-BY-STEP AUTOMATION LOGIC:
+--------------------------------------------------------------------------------
+
+STEP 1: TRIGGER ON PUBLISH DATE
+  Module: Schedule (daily at 9 AM) + Google Sheets > Search Rows
+  Sheet: "PublishQueue"
+  Filter: PublishDate = today AND Status = "ready"
+
+STEP 2: VALIDATE ARTICLE COMPLETENESS
+  Module: Router (Make.com)
+  Checks:
+    - HTML content exists (not empty)
+    - Featured image URL exists
+    - Meta title exists
+    - Meta description exists
+    - Slug exists
+  Route A: All checks pass -> proceed to Step 3
+  Route B: Any check fails -> send alert email, skip this article
+
+STEP 3: FETCH FULL ARTICLE HTML
+  Module: Google Docs > Get Content of a Document
+  Document ID: {{draft_doc_id}}
+  Output: Full HTML article body
+
+STEP 4: FORMAT FOR WORDPRESS
+  Module: Tools > Text Replace (multiple)
+  Actions:
+    - Replace [IMAGE: ...] placeholders with <img src="{{image_url}}" alt="{{alt_text}}">
+    - Ensure all internal links are absolute URLs
+    - Add table of contents HTML block at top
+    - Wrap FAQ section in schema-ready HTML
+
+STEP 5: PUBLISH TO WORDPRESS
+  Module: WordPress > Create a Post
+  Configuration:
+    Title: {{meta_title}}
+    Content: {{formatted_html}}
+    Slug: {{slug}}
+    Status: publish (or "scheduled" with date)
+    Featured Media: {{featured_image_media_id}}
+    Categories: [mapped from content_type]
+    Tags: [secondary_keywords array]
+    Custom Fields:
+      _yoast_wpseo_metadesc: {{meta_description}}
+      _yoast_wpseo_focuskw: {{focus_keyword}}
+
+  ALTERNATIVE PLATFORM - BLOGGER:
+  Module: HTTP > Make a Request
+  Endpoint: POST https://www.googleapis.com/blogger/v3/blogs/{{blog_id}}/posts
+  Headers: { "Authorization": "Bearer {{google_oauth_token}}" }
+  Body:
+  {
+    "kind": "blogger#post",
+    "title": "{{title}}",
+    "content": "{{formatted_html}}",
+    "labels": {{tags_array}}
+  }
+
+  ALTERNATIVE PLATFORM - WEBFLOW:
+  Module: HTTP > Make a Request
+  Endpoint: POST https://api.webflow.com/v2/collections/{{collection_id}}/items
+  Headers: { "Authorization": "Bearer {{webflow_api_key}}" }
+  Body:
+  {
+    "fieldData": {
+      "name": "{{title}}",
+      "slug": "{{slug}}",
+      "post-body": "{{formatted_html}}",
+      "meta-title": "{{meta_title}}",
+      "meta-description": "{{meta_description}}",
+      "main-image": "{{featured_image_url}}"
+    }
+  }
+
+STEP 6: ADD SCHEMA MARKUP
+  Module: WordPress > Update Post (or HTTP for other platforms)
+  Action: Inject JSON-LD schema into post head or body
+  Schema:
+  {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": "{{title}}",
+    "image": "{{featured_image_url}}",
+    "author": { "@type": "Person", "name": "{{author_name}}" },
+    "datePublished": "{{publish_date}}",
+    "description": "{{meta_description}}"
+  }
+
+STEP 7: VERIFY PUBLICATION
+  Module: HTTP > Make a Request
+  Action: GET the published URL and check HTTP status = 200
+  URL: https://yourdomain.com/blog/{{slug}}
+  Expected: 200 OK
+
+STEP 8: SUBMIT TO GOOGLE FOR INDEXING
+  Module: HTTP > Make a Request
+  Endpoint: POST https://indexing.googleapis.com/v3/urlNotifications:publish
+  Headers: { "Authorization": "Bearer {{google_oauth_token}}" }
+  Body:
+  {
+    "url": "https://yourdomain.com/blog/{{slug}}",
+    "type": "URL_UPDATED"
+  }
+
+STEP 9: UPDATE TRACKING
+  Module: Google Sheets > Update Row
+  Sheet: "PublishQueue" -> Set Status = "published", Published_URL = url
+  Module: Google Sheets > Add Row
+  Sheet: "PublishedArticles" -> Log: title, url, slug, date, keyword, seo_score
+
+STEP 10: TRIGGER DOWNSTREAM WORKFLOWS
+  Module: Webhooks > Custom Webhook (call)
+  Action: Notify Workflow 06 (Social Media) that new content is published
+  Payload: { "title": "...", "url": "...", "keyword": "...", "excerpt": "..." }
+
+STEP 11: SEND PUBLISH CONFIRMATION
+  Module: Email > Send
+  To: your-email@domain.com
+  Subject: "Published: {{title}}"
+  Body: "Article live at {{url}} | SEO Score: {{seo_score}} | Keyword: {{keyword}}"
+
+--------------------------------------------------------------------------------
+INPUTS & OUTPUTS:
+--------------------------------------------------------------------------------
+
+INPUTS:
+  - PublishQueue row (title, slug, HTML, meta data, image, publish date)
+  - WordPress / Blogger / Webflow API credentials
+  - Google Indexing API credentials
+
+OUTPUTS:
+  - Live published blog post with full SEO setup
+  - Google indexing request submitted
+  - PublishedArticles log entry
+  - Downstream webhook to Social Media workflow
+  - Confirmation email
+
+DATA STRUCTURE (PublishedArticles Sheet):
+  | Title               | URL                          | Slug          | Keyword        | Date       | SEO Score |
+  |---------------------|------------------------------|---------------|----------------|------------|-----------|
+  | Lead Gen Guide      | https://site.com/blog/lead.. | lead-gen-guide| lead generation| 2026-02-14 | 87        |
+
+--------------------------------------------------------------------------------
+TOOLS / APIs INVOLVED:
+--------------------------------------------------------------------------------
+  - Make.com (orchestration, scheduling, routing)
+  - Google Sheets (publish queue, tracking)
+  - Google Docs (article content)
+  - WordPress REST API (publishing)
+  - Blogger API v3 (alternative)
+  - Webflow CMS API (alternative)
+  - Google Indexing API (fast index submission)
+  - Gmail (notifications)
+  - Webhooks (downstream triggers)
+
+--------------------------------------------------------------------------------
+OPTIMIZATION OPPORTUNITIES:
+--------------------------------------------------------------------------------
+  1. Multi-platform publishing (post to WP + Medium + LinkedIn simultaneously)
+  2. Auto-generate AMP version for mobile speed
+  3. Schedule posts at optimal times based on audience analytics
+  4. Auto-submit sitemap to Google Search Console after publish batch
+  5. Add canonical URL management for cross-posted content
+  6. Implement draft review step (human approval before auto-publish)
+  7. Track time-to-index using Google Search Console API

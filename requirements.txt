@@ -1,0 +1,22 @@
+# ═══════════════════════════════════════════════════════════════
+# SEO_LEAD Platform — Python Dependencies
+# ═══════════════════════════════════════════════════════════════
+# Install: pip install -r requirements.txt
+# ═══════════════════════════════════════════════════════════════
+
+# AI Provider
+openai>=1.14.0
+
+# Google Sheets integration
+gspread>=6.0.0
+google-auth>=2.28.0
+
+# Environment variable management
+python-dotenv>=1.0.0
+
+# HTTP requests (DataForSEO API, Slack webhooks, WordPress)
+requests>=2.31.0
+
+# Cloud Run HTTP server
+flask>=3.0.0
+gunicorn>=22.0.0

@@ -1,0 +1,53 @@
+{
+  "summary": {
+    "niche": "lead generation",
+    "total_articles": 0,
+    "outlines_generated": 0,
+    "calendar_entries": 0,
+    "cluster_pillars": 0,
+    "sheets_written": {
+      "ContentCalendar": 0,
+      "BlogOutlines": 0,
+      "ClusterMap": 0,
+      "QueueUpdated": 0
+    },
+    "elapsed_seconds": 0.0,
+    "timestamp": "2026-02-12T10:42:23.824643"
+  },
+  "strategy": {
+    "_dry_run": true,
+    "clusters": [
+      {
+        "intent": "informational",
+        "keywords": [
+          {
+            "keyword": "how to generate leads online",
+            "volume": 3200,
+            "competition": "medium",
+            "opportunity_score": 8
+          },
+          {
+            "keyword": "lead generation strategies 2026",
+            "volume": 1800,
+            "competition": "low",
+            "opportunity_score": 9
+          }
+        ]
+      },
+      {
+        "intent": "transactional",
+        "keywords": [
+          {
+            "keyword": "best lead generation software",
+            "volume": 4500,
+            "competition": "high",
+            "opportunity_score": 6
+          }
+        ]
+      }
+    ]
+  },
+  "calendar": [],
+  "outlines_count": 0,
+  "outline_titles": []
+}

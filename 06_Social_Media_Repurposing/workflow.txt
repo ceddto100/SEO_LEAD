@@ -1,0 +1,217 @@
+================================================================================
+WORKFLOW 06: SOCIAL MEDIA CONTENT REPURPOSING
+================================================================================
+
+WORKFLOW NAME: Blog-to-Social Media Repurposing Engine
+
+TRIGGER (Make.com Module):
+- Webhooks > Custom Webhook: Receives payload from Workflow 05 when article publishes
+- OR Google Sheets > Watch Rows: PublishedArticles sheet, SocialStatus = "pending"
+
+--------------------------------------------------------------------------------
+AI AGENT ROLE:
+--------------------------------------------------------------------------------
+The AI agent acts as a Social Media Content Manager. It:
+- Takes a published blog post and creates platform-specific social content
+- Generates posts for Twitter/X, LinkedIn, Instagram, Facebook, Pinterest
+- Creates thread-style breakdowns of long articles
+- Schedules posts across multiple days for maximum reach
+- Adapts tone and format per platform
+
+--------------------------------------------------------------------------------
+STEP-BY-STEP AUTOMATION LOGIC:
+--------------------------------------------------------------------------------
+
+STEP 1: RECEIVE PUBLISHED ARTICLE DATA
+  Module: Webhooks > Custom Webhook
+  Payload expected:
+  {
+    "title": "...",
+    "url": "https://yourdomain.com/blog/slug",
+    "keyword": "...",
+    "excerpt": "first 200 chars of article",
+    "featured_image_url": "...",
+    "social_image_url": "...",
+    "key_points": ["point1", "point2", "point3"]
+  }
+
+STEP 2: FETCH FULL ARTICLE FOR CONTEXT
+  Module: HTTP > Make a Request
+  Action: GET the published article page or read from Google Docs
+  Output: Full article text for AI to work with
+
+STEP 3: AI SOCIAL CONTENT GENERATION
+  Module: OpenAI > Create Chat Completion
+  Model: gpt-4o
+  Prompt Template:
+  """
+  You are a social media content expert. Repurpose this blog article into
+  social media posts for multiple platforms.
+
+  ARTICLE TITLE: {{title}}
+  ARTICLE URL: {{url}}
+  KEY POINTS: {{key_points}}
+  FULL ARTICLE EXCERPT: {{first_1000_chars}}
+
+  Create the following:
+
+  1. TWITTER/X THREAD (5-7 tweets):
+     - Tweet 1: Hook (attention grabber, no link)
+     - Tweets 2-5: Key insights from the article (one per tweet)
+     - Tweet 6: Summary/takeaway
+     - Tweet 7: CTA with link
+     - Each tweet max 280 chars
+     - Include 2-3 relevant hashtags on the last tweet only
+
+  2. LINKEDIN POST (1 post):
+     - Professional tone, 1200-1500 chars
+     - Start with a hook/question
+     - Include 3-5 key takeaways as bullet points
+     - End with CTA and link
+     - Add 3-5 relevant hashtags
+
+  3. INSTAGRAM CAPTION (1 post):
+     - Engaging, conversational tone, 500-800 chars
+     - Include call to action (link in bio)
+     - Add 15-20 relevant hashtags (mix of popular + niche)
+     - Include emoji strategically
+
+  4. FACEBOOK POST (1 post):
+     - Conversational, 300-500 chars
+     - Ask a question to drive engagement
+     - Include link
+
+  5. PINTEREST PIN DESCRIPTION (1 pin):
+     - SEO-optimized, 200-300 chars
+     - Include 3-5 keywords naturally
+     - Strong CTA
+
+  Return as JSON:
+  {
+    "twitter_thread": ["tweet1", "tweet2", ...],
+    "linkedin": "full post text",
+    "instagram": { "caption": "...", "hashtags": "#tag1 #tag2" },
+    "facebook": "full post text",
+    "pinterest": "pin description"
+  }
+  """
+
+STEP 4: SCHEDULE TWITTER/X THREAD
+  Module: Twitter > Create a Tweet (Iterator for thread)
+  Schedule: Day 1 post-publish, 10:00 AM
+  Action: Post tweet 1, get tweet_id, reply with tweet 2, etc.
+
+  ALTERNATIVE: Use Buffer / Hootsuite API
+  Module: HTTP > Make a Request
+  Endpoint: POST https://api.bufferapp.com/1/updates/create.json
+  Body:
+  {
+    "text": "{{tweet_text}}",
+    "profile_ids": ["{{twitter_profile_id}}"],
+    "scheduled_at": "{{schedule_datetime}}"
+  }
+
+STEP 5: SCHEDULE LINKEDIN POST
+  Module: HTTP > Make a Request
+  Endpoint: POST https://api.linkedin.com/v2/posts
+  Headers: { "Authorization": "Bearer {{linkedin_token}}" }
+  Body:
+  {
+    "author": "urn:li:person:{{person_id}}",
+    "lifecycleState": "PUBLISHED",
+    "specificContent": {
+      "com.linkedin.ugc.ShareContent": {
+        "shareCommentary": { "text": "{{linkedin_post}}" },
+        "shareMediaCategory": "ARTICLE",
+        "media": [{
+          "status": "READY",
+          "originalUrl": "{{article_url}}"
+        }]
+      }
+    }
+  }
+  Schedule: Day 2 post-publish, 8:00 AM
+
+STEP 6: SCHEDULE INSTAGRAM POST
+  Module: HTTP > Make a Request (via Meta Graph API)
+  Endpoint: POST https://graph.facebook.com/v18.0/{{ig_user_id}}/media
+  Body:
+  {
+    "image_url": "{{social_image_url}}",
+    "caption": "{{instagram_caption}}\n\n{{instagram_hashtags}}"
+  }
+  Then: POST https://graph.facebook.com/v18.0/{{ig_user_id}}/media_publish
+  Schedule: Day 3, 12:00 PM
+
+STEP 7: SCHEDULE FACEBOOK POST
+  Module: Facebook Pages > Create a Post
+  Page ID: {{page_id}}
+  Message: {{facebook_post}}
+  Link: {{article_url}}
+  Schedule: Day 1, 2:00 PM
+
+STEP 8: CREATE PINTEREST PIN
+  Module: HTTP > Make a Request
+  Endpoint: POST https://api.pinterest.com/v5/pins
+  Headers: { "Authorization": "Bearer {{pinterest_token}}" }
+  Body:
+  {
+    "title": "{{title}}",
+    "description": "{{pinterest_description}}",
+    "board_id": "{{board_id}}",
+    "media_source": {
+      "source_type": "image_url",
+      "url": "{{pinterest_image_url}}"
+    },
+    "link": "{{article_url}}"
+  }
+
+STEP 9: LOG SOCIAL POSTS
+  Module: Google Sheets > Add Row (Iterator)
+  Sheet: "SocialPosts"
+  Columns: Article Title | Platform | Post Text | Schedule Date | Status | Post URL | Engagement
+
+STEP 10: UPDATE PUBLISHED ARTICLES
+  Module: Google Sheets > Update Row
+  Sheet: "PublishedArticles"
+  Set: SocialStatus = "scheduled", SocialPlatforms = "twitter,linkedin,instagram,facebook,pinterest"
+
+--------------------------------------------------------------------------------
+INPUTS & OUTPUTS:
+--------------------------------------------------------------------------------
+
+INPUTS:
+  - Published article data (title, URL, key points, images)
+  - Platform API credentials (Twitter, LinkedIn, Meta, Pinterest)
+  - Scheduling preferences (post times per platform)
+
+OUTPUTS:
+  - Twitter/X thread (5-7 tweets scheduled)
+  - LinkedIn post (scheduled)
+  - Instagram post with image (scheduled)
+  - Facebook post (scheduled)
+  - Pinterest pin (scheduled)
+  - Social posts log in Google Sheets
+
+--------------------------------------------------------------------------------
+TOOLS / APIs INVOLVED:
+--------------------------------------------------------------------------------
+  - Make.com (orchestration, scheduling)
+  - OpenAI API (content repurposing)
+  - Twitter/X API v2 (posting)
+  - LinkedIn API (posting)
+  - Meta Graph API (Instagram + Facebook)
+  - Pinterest API v5 (pinning)
+  - Buffer/Hootsuite API (optional: unified scheduling)
+  - Google Sheets (tracking)
+
+--------------------------------------------------------------------------------
+OPTIMIZATION OPPORTUNITIES:
+--------------------------------------------------------------------------------
+  1. Use Buffer or Hootsuite API for unified cross-platform scheduling
+  2. Re-share top-performing content 30/60/90 days later (evergreen recycling)
+  3. Create short-form video scripts from articles for TikTok/Reels
+  4. Track engagement metrics per platform and optimize posting times
+  5. A/B test different hooks/headlines per platform
+  6. Auto-respond to comments with AI-generated replies
+  7. Repurpose into newsletter snippets (feed to Workflow 09)

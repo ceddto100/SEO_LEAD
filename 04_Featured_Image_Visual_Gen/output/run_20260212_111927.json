@@ -1,0 +1,21 @@
+{
+  "summary": {
+    "images_generated": 2,
+    "elapsed_seconds": 0.1,
+    "timestamp": "2026-02-12T11:19:27.217424"
+  },
+  "results": [
+    {
+      "title": "Lead Generation Guide",
+      "featured_url": "https://placeholder.example.com/image_1792_1024.png",
+      "social_url": "https://placeholder.example.com/image_1024_1024.png",
+      "alt_text": "Lead Generation Guide - comprehensive guide to lead generation"
+    },
+    {
+      "title": "Best CRM Tools 2026",
+      "featured_url": "https://placeholder.example.com/image_1792_1024.png",
+      "social_url": "https://placeholder.example.com/image_1024_1024.png",
+      "alt_text": "Best CRM Tools 2026 - comprehensive guide to best crm tools"
+    }
+  ]
+}

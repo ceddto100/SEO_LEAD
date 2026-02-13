@@ -1,0 +1,311 @@
+================================================================================
+BONUS WORKFLOWS
+================================================================================
+
+================================================================================
+BONUS A: MONETIZATION AUTOMATION
+================================================================================
+
+WORKFLOW NAME: Revenue Optimization & Monetization Engine
+
+TRIGGER: Schedule > Weekly + Webhook from Workflow 10
+
+AUTOMATION LOGIC:
+
+1. AFFILIATE LINK INJECTION
+   Module: OpenAI > Create Chat Completion
+   Action: Analyze published articles and identify natural affiliate placement opportunities
+   Module: WordPress > Update Post
+   Action: Auto-insert contextual affiliate links where relevant
+   Track: Clicks and conversions per affiliate link via Google Sheets
+
+2. SPONSORED CONTENT MATCHING
+   Module: Google Sheets > Watch Rows ("SponsorRequests" sheet)
+   Module: OpenAI > Analyze if sponsor topic aligns with existing content strategy
+   Module: Email > Send proposal template to sponsor contact
+   Auto-generate: Sponsored article outline using Workflow 02 logic
+
+3. DIGITAL PRODUCT UPSELL AUTOMATION
+   Module: Router based on lead segment
+   Action: Recommend relevant digital products (courses, templates, tools)
+   Module: Email > Send product recommendation based on content consumed
+   Track: product_recommended, clicked, purchased
+
+4. AD REVENUE OPTIMIZATION
+   Module: HTTP > Google AdSense API (pull earnings data)
+   Module: OpenAI > Analyze which pages earn most ad revenue
+   Action: Identify patterns (topic, traffic source, page length)
+   Recommend: Create more content in high-RPM categories
+
+JSON DATA STRUCTURE:
+{
+  "monetization_channels": [
+    {
+      "channel": "affiliate",
+      "revenue_last_30d": 450,
+      "top_performing_page": "/blog/best-crm-tools",
+      "clicks": 340,
+      "conversions": 12,
+      "epc": "$1.32"
+    },
+    {
+      "channel": "digital_product",
+      "revenue_last_30d": 1200,
+      "top_product": "SEO Checklist Bundle",
+      "units_sold": 24
+    }
+  ]
+}
+
+TOOLS: Make.com, OpenAI, Google Sheets, WordPress API, Affiliate Network APIs,
+       Stripe/PayPal (payment tracking), AdSense API
+
+
+================================================================================
+BONUS B: A/B TESTING AUTOMATION
+================================================================================
+
+WORKFLOW NAME: AI-Powered A/B Testing Engine
+
+TRIGGER: Schedule > Daily + Webhook from Workflow 05 (new publish)
+
+AUTOMATION LOGIC:
+
+1. TITLE TAG A/B TESTING
+   Module: Schedule > Every 2 weeks per article
+   Step 1: OpenAI > Generate 2 alternative title tags for a target page
+   Prompt:
+   """
+   Current title: {{current_title}}
+   Keyword: {{keyword}}
+   Current CTR: {{current_ctr}}
+   Current Position: {{position}}
+
+   Generate 2 alternative title tags (max 60 chars) that might improve CTR.
+   Variant A: Focus on curiosity gap
+   Variant B: Focus on specific number/benefit
+
+   Return JSON:
+   { "variant_a": "...", "variant_b": "..." }
+   """
+   Step 2: WordPress > Update Post (change title to Variant A)
+   Step 3: Wait 7 days, pull Search Console CTR data
+   Step 4: Compare CTR: original vs variant
+   Step 5: If variant wins by >10%, keep it. Otherwise revert.
+   Step 6: Log results to "ABTests" sheet
+
+2. META DESCRIPTION A/B TESTING
+   Same flow as title tags but for meta descriptions
+   Measure: CTR changes in Search Console data
+
+3. CTA A/B TESTING
+   Module: Google Optimize / custom split
+   Step 1: OpenAI > Generate 2 CTA variants per article
+   Step 2: Implement CTA rotation (alternating by session)
+   Step 3: Track conversion rate per variant
+   Step 4: After 100+ impressions each, declare winner
+   Step 5: Set winning CTA as permanent
+
+4. EMAIL SUBJECT LINE A/B TESTING
+   Module: Mailchimp > Create A/B Campaign
+   Step 1: OpenAI > Generate 3 subject line variants
+   Step 2: Send Variant A to 15%, Variant B to 15%, Variant C to 15%
+   Step 3: Wait 4 hours, measure open rates
+   Step 4: Send winning variant to remaining 55%
+   Step 5: Log results to "EmailABTests" sheet
+
+TRACKING DATA STRUCTURE:
+{
+  "test_id": "ab_001",
+  "type": "title_tag",
+  "page": "/blog/seo-guide",
+  "original": "SEO Guide for Beginners",
+  "variant": "7 SEO Secrets That Tripled My Traffic",
+  "original_ctr": "3.2%",
+  "variant_ctr": "5.1%",
+  "winner": "variant",
+  "lift": "+59%",
+  "confidence": "92%",
+  "date_started": "2026-01-28",
+  "date_concluded": "2026-02-11"
+}
+
+TOOLS: Make.com, OpenAI, WordPress API, Google Search Console API,
+       Mailchimp, Google Sheets
+
+
+================================================================================
+BONUS C: CONTENT REFRESH AUTOMATION
+================================================================================
+
+WORKFLOW NAME: Evergreen Content Refresh & Decay Prevention Engine
+
+TRIGGER: Schedule > Weekly on Tuesdays at 7 AM
+
+AUTOMATION LOGIC:
+
+1. IDENTIFY STALE CONTENT
+   Module: Google Sheets > Search Rows
+   Sheet: "PublishedArticles"
+   Filter: last_updated > 90 days ago
+   Module: HTTP > Google Search Console API
+   Action: Pull current rankings for each stale page
+   Compare: current_position vs best_historical_position
+
+2. CLASSIFY REFRESH URGENCY
+   Module: OpenAI > Create Chat Completion
+   Prompt:
+   """
+   Classify these pages by refresh urgency:
+
+   {{stale_pages_with_traffic_data}}
+
+   Categories:
+   - CRITICAL: Traffic dropped >40%, was a top performer
+   - HIGH: Traffic dropped 20-40%, or contains outdated info (year references, old stats)
+   - MEDIUM: Traffic flat but page is >6 months old
+   - LOW: Low traffic page, minor updates only
+
+   Return JSON array with urgency classification and specific update actions.
+   """
+
+3. AUTO-GENERATE REFRESH BRIEF
+   Module: OpenAI > Create Chat Completion
+   For each CRITICAL/HIGH page:
+   Prompt:
+   """
+   Create a content refresh brief for: {{page_url}}
+   Current content: {{current_content_summary}}
+   Current word count: {{word_count}}
+   Ranking keyword: {{keyword}}
+
+   Identify:
+   - Outdated statistics or year references to update
+   - New sections to add based on current SERP features
+   - Internal links to add (from recent published articles)
+   - FAQ questions to add (from People Also Ask)
+   - Multimedia opportunities (tables, charts, videos)
+
+   Return structured refresh brief as JSON.
+   """
+
+4. QUEUE REFRESH FOR WORKFLOW 03
+   Module: Google Sheets > Add Row
+   Sheet: "ContentCalendar"
+   Type: "refresh"
+   Attach: refresh brief document ID
+
+5. TRACK REFRESH IMPACT
+   Module: Schedule > 30 days after refresh publishes
+   Module: Google Search Console API > Compare pre/post metrics
+   Module: Google Sheets > Update Row "RefreshResults"
+   Columns: | URL | Pre-Traffic | Post-Traffic | Pre-Position | Post-Position | Change% |
+
+TOOLS: Make.com, OpenAI, Google Search Console API, Google Sheets,
+       Google Docs, WordPress API
+
+
+================================================================================
+BONUS D: LEAD SCORING AI WORKFLOW
+================================================================================
+
+WORKFLOW NAME: Dynamic AI Lead Scoring & Segmentation Engine
+
+TRIGGER: Webhook (real-time on every lead action) + Schedule (daily re-score)
+
+AUTOMATION LOGIC:
+
+1. BEHAVIORAL SCORING (real-time)
+   Module: Webhooks > Custom Webhook
+   Receives events from website tracking:
+   {
+     "email": "lead@company.com",
+     "event": "page_view",
+     "page": "/pricing",
+     "timestamp": "2026-02-12T14:30:00Z"
+   }
+
+   Scoring Rules:
+   | Action                     | Points |
+   |---------------------------|--------|
+   | Visited pricing page       | +20    |
+   | Visited case study         | +10    |
+   | Downloaded lead magnet     | +15    |
+   | Opened email               | +3     |
+   | Clicked email link         | +5     |
+   | Replied to email           | +25    |
+   | Booked a meeting           | +40    |
+   | Visited 5+ pages           | +10    |
+   | Returned within 48 hours   | +15    |
+   | Visited careers page       | -10    |
+   | Used free email domain     | -5     |
+
+   Module: Google Sheets > Update Row
+   Sheet: "MasterLeadList"
+   Action: Add points to current score
+
+2. FIRMOGRAPHIC SCORING (on capture)
+   Module: OpenAI > Analyze lead profile
+   Score based on:
+   - Company size alignment with ICP (+0 to +20)
+   - Industry match (+0 to +15)
+   - Job title seniority (+0 to +15)
+   - Technology stack match (+0 to +10)
+   - Geographic match (+0 to +5)
+
+3. DYNAMIC TIER REASSIGNMENT
+   Module: Router (conditional)
+   When score crosses tier threshold:
+     - Score reaches 80: Upgrade to HOT, notify sales via Slack
+     - Score drops below 50: Downgrade to COOL, switch to nurture
+     - Score reaches 0: Mark as disqualified
+
+4. PREDICTIVE SCORING (monthly)
+   Module: OpenAI > Create Chat Completion
+   Prompt:
+   """
+   Analyze these converted leads vs non-converted leads:
+
+   CONVERTED (became customers):
+   {{converted_leads_data}}
+
+   NOT CONVERTED:
+   {{non_converted_leads_data}}
+
+   Identify:
+   1. Common traits of converted leads
+   2. Predictive signals (which behaviors predict conversion)
+   3. Updated scoring weights based on actual outcomes
+   4. Segments that convert best
+
+   Return JSON with updated scoring model.
+   """
+
+   Module: Google Sheets > Update Row
+   Sheet: "ScoringConfig"
+   Action: Update scoring weights based on AI analysis
+
+5. LEAD LIFECYCLE MANAGEMENT
+   Module: Schedule > Daily
+   Actions:
+   - Leads inactive 30+ days: reduce score by 5/week
+   - Leads that bounced emails: flag for list cleanup
+   - Leads that unsubscribed: remove from active scoring
+
+SCORING DATA STRUCTURE:
+{
+  "email": "lead@company.com",
+  "behavioral_score": 45,
+  "firmographic_score": 30,
+  "total_score": 75,
+  "tier": "warm",
+  "score_history": [
+    {"date": "2026-02-10", "score": 15, "event": "lead_capture"},
+    {"date": "2026-02-11", "score": 45, "event": "visited_pricing"},
+    {"date": "2026-02-12", "score": 75, "event": "opened_3_emails"}
+  ],
+  "predicted_conversion_probability": "34%"
+}
+
+TOOLS: Make.com, OpenAI, Google Sheets, Webhooks, HubSpot/Pipedrive CRM,
+       Slack, Website tracking (GA4 events or custom pixel)
