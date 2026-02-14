@@ -55,7 +55,7 @@ def save_outlines(
     Each row has: Title, Slug, Keyword, section count, FAQ count, and
     the full outline as formatted text.
     """
-    from outline_generator import format_outline_text
+    from .outline_generator import format_outline_text
 
     rows = []
     for outline, plan_item in zip(outlines, content_plan):

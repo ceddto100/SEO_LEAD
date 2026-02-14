@@ -169,16 +169,23 @@ class SheetsClient:
         self,
         tab_name: str,
         row: int,
-        col: int,
+        col: int | str,
         value: Any,
     ) -> None:
-        """Update a single cell (1-indexed row and col)."""
+        """Update a single cell. col can be a 1-indexed int or a column header name (str)."""
         if settings.dry_run:
-            log.info("[DRY-RUN] Would update '%s' cell (%d,%d) = %s", tab_name, row, col, value)
+            log.info("[DRY-RUN] Would update '%s' cell (%d,%s) = %s", tab_name, row, col, value)
             return
 
         ws = self._get_worksheet(tab_name)
         if ws:
+            if isinstance(col, str):
+                headers = ws.row_values(1)
+                try:
+                    col = headers.index(col) + 1  # Convert to 1-indexed
+                except ValueError:
+                    log.error("Column '%s' not found in '%s' headers: %s", col, tab_name, headers)
+                    return
             ws.update_cell(row, col, value)
             log.debug("Updated '%s' (%d,%d) → %s", tab_name, row, col, value)
 
